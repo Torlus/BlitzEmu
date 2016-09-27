@@ -36,13 +36,21 @@ public class Tokenizer {
 		position = mark;
 	}
 		
+	public int position() {
+		return position;
+	}
+	public void seek(int position) {
+		this.position = position;
+	}
+	
+	
 	public boolean matchTokens(TokenType... args) {		
 		return matchTokens(0, args);
 	}
 
 	public boolean matchTokens(int offset, TokenType... args) {		
 		for(int k = 0; k < args.length; k++) {
-			if (!(args[k] == nextToken(offset + k).getType()))
+			if (!(args[k] == nextToken(offset + k).type))
 				return false;
 		}
 		return true;
@@ -65,9 +73,12 @@ public class Tokenizer {
 			if (br != null)
 				br.close();
 		}
+		for(int n = 0; n < tokens.size(); n++)
+			tokens.get(n).position = n;
 	}
 
 	private void tokenizeLine(int lineNo, String line) throws Exception {
+		Pattern pLabel = Pattern.compile("^\\.[a-zA-Z0-9_]+:");
 		Pattern pIdentifier = Pattern.compile("^[a-zA-Z][a-zA-Z0-9\\\\_]*");
 		Pattern pNumber = Pattern.compile("^\\$?[0-9a-f]+(\\.[0-9]+)*");
 		
@@ -107,66 +118,74 @@ public class Tokenizer {
 				return;
 			}
 			
-			// Identifiers
-			Matcher mIdentifier = pIdentifier.matcher(line);
-			if (mIdentifier.lookingAt()) {
-				int end = mIdentifier.end();
-				String identifier = line.substring(0, end);
+			Matcher mLabel = pLabel.matcher(line);
+			if (mLabel.lookingAt()) {
+				int end = mLabel.end();
+				String label = line.substring(1, end - 1);
 				line = line.substring(end);
-				
-				// Search for keywords
-				boolean found = false;
-				for(TokenType tt : TokenType.values()) {
-					String keyword = tt.getValue();
-					if (identifier.equals(keyword)) {
-						Token token = new Token(tt, lineNo);
-						tokens.add(token);
-						found = true;
-						break;
-					}
-				}
-				if (!found) {
-					Token token = new Token(TokenType.IDENTIFIER, lineNo, identifier);
-					tokens.add(token);
-				}
-				
+				tokens.add(new Token(TokenType.LABEL, lineNo, label));
 			} else {
-				Matcher mNumber = pNumber.matcher(line);
-				if (mNumber.lookingAt()) {
-					int end = mNumber.end();
-					String sNumber = line.substring(0, end);
-					Token number = null;
-					if (sNumber.indexOf('.') >= 0) {
-						number = new Token(TokenType.FLOAT, lineNo, sNumber);	
-					} else {
-						number = new Token(TokenType.INTEGER, lineNo, sNumber);
-					}
-					tokens.add(number);
+				// Identifiers
+				Matcher mIdentifier = pIdentifier.matcher(line);
+				if (mIdentifier.lookingAt()) {
+					int end = mIdentifier.end();
+					String identifier = line.substring(0, end);
 					line = line.substring(end);
-					continue;
-				} else {
-					// Search for remaining tokens
+					
+					// Search for keywords
 					boolean found = false;
 					for(TokenType tt : TokenType.values()) {
 						String keyword = tt.getValue();
-						if (keyword != null) {
-							int end = keyword.length();
-							if (line.length() >= end) {
-								if (line.substring(0, end).equals(keyword)) {
-									line = line.substring(end);
-									Token token = new Token(tt, lineNo);
-									tokens.add(token);
-									found = true;
-									break;
+						if (identifier.equals(keyword)) {
+							Token token = new Token(tt, lineNo);
+							tokens.add(token);
+							found = true;
+							break;
+						}
+					}
+					if (!found) {
+						Token token = new Token(TokenType.IDENTIFIER, lineNo, identifier);
+						tokens.add(token);
+					}
+					
+				} else {
+					// Numbers
+					Matcher mNumber = pNumber.matcher(line);
+					if (mNumber.lookingAt()) {
+						int end = mNumber.end();
+						String sNumber = line.substring(0, end);
+						Token number = null;
+						if (sNumber.indexOf('.') >= 0) {
+							number = new Token(TokenType.FLOAT, lineNo, sNumber);	
+						} else {
+							number = new Token(TokenType.INTEGER, lineNo, sNumber);
+						}
+						tokens.add(number);
+						line = line.substring(end);
+						continue;
+					} else {
+						// Search for remaining tokens
+						boolean found = false;
+						for(TokenType tt : TokenType.values()) {
+							String keyword = tt.getValue();
+							if (keyword != null) {
+								int end = keyword.length();
+								if (line.length() >= end) {
+									if (line.substring(0, end).equals(keyword)) {
+										line = line.substring(end);
+										Token token = new Token(tt, lineNo);
+										tokens.add(token);
+										found = true;
+										break;
+									}
 								}
 							}
 						}
-					}
-					if (!found)
-						throw new Exception("Invalid expression at line " + lineNo);
-				}
-			}
-			
+						if (!found)
+							throw new Exception("Invalid expression at line " + lineNo);
+					} // Numbers
+				} // Identifiers
+			} // Label
 		}
 		if (currentString.length() > 0)
 			throw new Exception("Unterminated String at line " + lineNo);

@@ -23,6 +23,7 @@ public enum TokenType {
 	
 	END("End"),
 	
+	LABEL(null),
 	IDENTIFIER(null),
 	STRING(null),
 	INTEGER(null),
