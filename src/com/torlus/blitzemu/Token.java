@@ -31,6 +31,30 @@ public class Token {
 		}
 	}
 
+	public boolean isValue() {
+		switch(type) {
+		case INTEGER:
+		case FLOAT:
+		case STRING:
+		case IDENTIFIER:
+			return true;
+		default:
+			return false;
+		}
+	}
+
+	public boolean isOperation() {
+		switch(type) {
+		case PLUS:
+		case MINUS:
+		case STAR:
+		case SLASH:
+			return true;
+		default:
+			return false;
+		}
+	}
+	
 	public String toString() {
 		String res = n5.format(line);
 		res += " " + type.name();
