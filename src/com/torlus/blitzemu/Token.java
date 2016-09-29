@@ -31,15 +31,23 @@ public class Token {
 		}
 	}
 
-	public boolean isValue() {
+	public boolean isNumeric() {
 		switch(type) {
 		case INTEGER:
 		case FLOAT:
+			return true;
+		default:
+			return false;
+		}		
+	}
+	
+	public boolean isValue() {
+		switch(type) {
 		case STRING:
 		case IDENTIFIER:
 			return true;
 		default:
-			return false;
+			return isNumeric();
 		}
 	}
 
@@ -54,6 +62,22 @@ public class Token {
 			return false;
 		}
 	}
+	
+	public boolean isComparison() {
+		switch(type) {
+		case GT:
+		case LT:
+		case GE:
+		case LE:
+		case EQ:
+		case NE:
+			return true;
+		default:
+			return false;
+		}
+	}
+	
+	
 	
 	public String toString() {
 		String res = n5.format(line);

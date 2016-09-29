@@ -9,17 +9,36 @@ public class PassOne {
 	}
 
 	public void eval(Tokenizer tk) throws Exception {
-		while (tk.nextToken().type != TokenType.EOF) {
+		while (!tk.matchTokens(TokenType.EOF)) {
 			// End
 			if (tk.matchTokens(TokenType.END)) {
 				return;
 			}
+			evalStatements(tk);
+		}
+		throw new Exception("Unexpected EOF");
+	}
+	
+	public void evalStatements(Tokenizer tk) throws Exception {
+		while(true) {
 			
-			// Strip leading EOLs
 			if (tk.matchTokens(TokenType.EOL)) {
+				// Strip leading EOLs
+				tk.consumeToken();
+			} else if (tk.matchTokens(TokenType.COLON)) {
+				// Strip colons
 				tk.consumeToken();
 			} else {
-				throw new Exception("Unexpected Token");
+				return;
+			}
+	
+			if (tk.matchTokens(TokenType.WHILE)) {
+				tk.consumeToken();
+				evalCondition(tk);
+				evalStatements(tk);
+				if (!tk.matchTokens(TokenType.WEND)) {
+					throw new Exception("'Wend' Expected");
+				}
 			}
 			
 			// Assignments
@@ -35,22 +54,62 @@ public class PassOne {
 				tk.consumeToken();
 				evalParameters(tk);
 			}
-			
 		}
-		throw new Exception("Unexpected EOF");
+	}
+	
+	public void evalCondition(Tokenizer tk) throws Exception {
+		if (tk.matchTokens(TokenType.LPAREN)) {
+			tk.consumeToken();
+			evalCondition(tk);
+			if (tk.matchTokens(TokenType.RPAREN)) {
+				tk.consumeToken();
+			} else {
+				throw new Exception("')' Expected");
+			}
+		} else {
+			evalExpression(tk);
+			if (tk.nextToken().isComparison()) {
+				tk.consumeToken();
+			} else {
+				throw new Exception("Expected: comparison");
+			}
+			evalExpression(tk);
+		}
 	}
 	
 	public void evalParameters(Tokenizer tk) throws Exception {
-		while(tk.nextToken().type != TokenType.EOL) {
+		while(!tk.matchTokens(TokenType.EOL)) {
 			evalExpression(tk);
-			if (tk.nextToken().type == TokenType.COMMA) {
+			if (tk.matchTokens(TokenType.COMMA)) {
 				tk.consumeToken();
+			}
+			if (tk.matchTokens(TokenType.RPAREN)) {
+				return;
 			}
 		}
 	}
 
 	public void evalExpression(Tokenizer tk) throws Exception {
-		if (tk.nextToken().isValue()) {
+		if (tk.matchTokens(TokenType.IDENTIFIER, TokenType.LPAREN)) {
+			tk.consumeToken(2);
+			evalParameters(tk);
+			if (tk.matchTokens(TokenType.RPAREN)) {
+				tk.consumeToken();
+			} else {
+				throw new Exception("')' Expected");
+			}
+			if (tk.nextToken().isOperation()) {
+				tk.consumeToken();
+				evalExpression(tk);
+			}
+		} else if (tk.matchTokens(TokenType.MINUS) && tk.nextToken(1).isNumeric()) {
+			if (tk.nextToken(2).isOperation()) {
+				tk.consumeToken(3);
+				evalExpression(tk);
+			} else {
+				tk.consumeToken(2);
+			}			
+		} else if (tk.nextToken().isValue()) {
 			if (tk.nextToken(1).isOperation()) {
 				tk.consumeToken(2);
 				evalExpression(tk);
@@ -65,7 +124,7 @@ public class PassOne {
 			} else {
 				throw new Exception("')' Expected");
 			}
-			if (tk.nextToken(1).isOperation()) {
+			if (tk.nextToken().isOperation()) {
 				tk.consumeToken();
 				evalExpression(tk);
 			}
