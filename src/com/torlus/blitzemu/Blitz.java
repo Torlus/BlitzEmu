@@ -26,7 +26,7 @@ public class Blitz {
 			p1.eval(tk);
 		} catch (Exception ex) {
 			ex.printStackTrace();
-			tk.dumpRemainingTokens();
+			// tk.dumpRemainingTokens();
 			return;
 		}
 	}

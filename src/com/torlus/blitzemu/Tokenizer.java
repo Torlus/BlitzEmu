@@ -20,6 +20,8 @@ public class Tokenizer {
 		return nextToken(0);
 	}
 	public void consumeToken(int count) {
+		/*for(int n = position; n < position + count; n++)
+			System.out.println("cons " + tokens.get(n));*/
 		position += count;
 	}
 	public void consumeToken() {
@@ -115,7 +117,7 @@ public class Tokenizer {
 			
 			// Comments
 			if (line.startsWith(";")) {
-				return;
+				break;
 			}
 			
 			Matcher mLabel = pLabel.matcher(line);
@@ -203,17 +205,5 @@ public class Tokenizer {
 			System.out.println(tokens.get(k));
 		}
 	}
-	
-	public static void main(String args[]) {
-		Tokenizer tokenizer = new Tokenizer();
-		FileInputStream in = null;
-		try {
-			in = new FileInputStream("jps" + File.separator + "src_overtaking.txt");
-			tokenizer.tokenize(in);
-		} catch (Exception ex) {
-			ex.printStackTrace();
-		}
-		tokenizer.dumpTokens();
-	}
-	
+		
 }
