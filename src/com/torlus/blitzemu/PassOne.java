@@ -19,15 +19,15 @@ public class PassOne {
 		throw new Exception("Unexpected EOF");
 	}
 		
-	public void evalStatementsInline(int level, Tokenizer tk) throws Exception {
-		System.out.println("Entry " + level);
-		evalStatementsInlineInt(level, tk);
-		System.out.println("Exit  " + level);				
+	public void evalInlineStatements(int level, Tokenizer tk) throws Exception {
+		// System.out.println("Entry " + level);
+		evalInlineStatementsInt(level, tk);
+		// System.out.println("Exit  " + level);				
 	}
 
-	public void evalStatementsInlineInt(int level, Tokenizer tk) throws Exception {
+	public void evalInlineStatementsInt(int level, Tokenizer tk) throws Exception {
 		while(true) {
-			System.out.println("Inline Loop on " + tk.nextToken());
+			// System.out.println("Inline Loop on " + tk.nextToken());
 			if (tk.matchTokens(TokenType.COLON)) {
 				// Strip colons
 				tk.consumeToken();
@@ -48,10 +48,10 @@ public class PassOne {
 				evalCondition(tk);
 				if (tk.matchTokens(TokenType.THEN)) {
 					tk.consumeToken();
-					evalStatementsInline(level + 1, tk);
+					evalInlineStatements(level + 1, tk);
 					if (tk.matchTokens(TokenType.ELSE)) {
 						tk.consumeToken();
-						evalStatementsInline(level + 1, tk);					
+						evalInlineStatements(level + 1, tk);					
 					}
 					if (tk.matchTokens(TokenType.EOL)) {
 						tk.consumeToken();
@@ -79,14 +79,14 @@ public class PassOne {
 	}
 	
 	public void evalStatements(int level, Tokenizer tk) throws Exception {
-		System.out.println("Entry " + level);
+		// System.out.println("Entry " + level);
 		evalStatementsInt(level, tk);
-		System.out.println("Exit  " + level);		
+		// System.out.println("Exit  " + level);		
 	}
 	
 	public void evalStatementsInt(int level, Tokenizer tk) throws Exception {
 		while(true) {
-			System.out.println("Loop on " + tk.nextToken());
+			// System.out.println("Loop on " + tk.nextToken());
 			if (tk.matchTokens(TokenType.EOL)) {
 				// Strip leading EOLs
 				tk.consumeToken();
@@ -143,10 +143,10 @@ public class PassOne {
 				evalCondition(tk);
 				if (tk.matchTokens(TokenType.THEN)) {
 					tk.consumeToken();
-					evalStatementsInline(level + 1, tk);
+					evalInlineStatements(level + 1, tk);
 					if (tk.matchTokens(TokenType.ELSE)) {
 						tk.consumeToken();
-						evalStatementsInline(level + 1, tk);					
+						evalInlineStatements(level + 1, tk);					
 					}
 					if (tk.matchTokens(TokenType.EOL)) {
 						tk.consumeToken();
@@ -198,7 +198,7 @@ public class PassOne {
 			if (tk.nextToken().isComparison()) {
 				tk.consumeToken();
 			} else {
-				throw new Exception("Comparison Expected");
+				throw new Exception("Comparison Expected " + tk.nextToken());
 			}
 			evalExpression(tk);
 		}
@@ -217,7 +217,45 @@ public class PassOne {
 	}
 
 	public void evalExpression(Tokenizer tk) throws Exception {
-		if (tk.matchTokens(TokenType.IDENTIFIER, TokenType.LPAREN)) {
+		// System.out.println("Enter E " + tk.nextToken());
+		if (tk.nextToken().isValue() || tk.matchTokens(TokenType.IDENTIFIER)) {
+			if (tk.nextToken(1).isNumeric()) {
+				// <E> <Negative number> -> <E> + <Negative number>
+				tk.consumeToken();
+				evalExpression(tk);
+			} else if (tk.nextToken(1).isTermOperation()) {
+				tk.consumeToken(2);
+				evalExpression(tk);
+			} else {
+				evalTerm(tk);
+			}
+		} else {
+			evalTerm(tk);
+		}
+		// System.out.println("Exit  E " + tk.nextToken());
+	}
+
+	public void evalTerm(Tokenizer tk) throws Exception {
+		// System.out.println("Enter T " + tk.nextToken());
+		if (tk.nextToken().isValue() || tk.matchTokens(TokenType.IDENTIFIER)) {
+			if (tk.nextToken(1).isFactorOperation()) {
+				tk.consumeToken(2);
+				evalExpression(tk);
+			} else {
+				evalFactor(tk);
+			}
+		} else {
+			evalFactor(tk);
+		}
+		// System.out.println("Exit  T " + tk.nextToken());
+	}
+	
+	public void evalFactor(Tokenizer tk) throws Exception {
+		// System.out.println("Enter F " + tk.nextToken());
+		if (tk.matchTokens(TokenType.MINUS)) {
+			tk.consumeToken();
+			evalExpression(tk);
+		} else if (tk.matchTokens(TokenType.IDENTIFIER, TokenType.LPAREN)) {
 			tk.consumeToken(2);
 			evalParameters(tk);
 			if (tk.matchTokens(TokenType.RPAREN)) {
@@ -225,23 +263,12 @@ public class PassOne {
 			} else {
 				throw new Exception("')' Expected");
 			}
-			if (tk.nextToken().isOperation()) {
+			if (tk.nextToken().isTermOperation()) {
 				tk.consumeToken();
-				evalExpression(tk);
-			}
-		} else if (tk.matchTokens(TokenType.MINUS) && tk.nextToken(1).isNumeric()) {
-			if (tk.nextToken(2).isOperation()) {
-				tk.consumeToken(3);
-				evalExpression(tk);
-			} else {
-				tk.consumeToken(2);
-			}			
-		} else if (tk.nextToken().isValue()) {
-			if (tk.nextToken(1).isOperation()) {
-				tk.consumeToken(2);
-				evalExpression(tk);
-			} else {
+				evalTerm(tk);
+			} else if (tk.nextToken().isFactorOperation()) {
 				tk.consumeToken();
+				evalFactor(tk);
 			}
 		} else if (tk.matchTokens(TokenType.LPAREN)) {
 			tk.consumeToken();
@@ -251,18 +278,24 @@ public class PassOne {
 			} else {
 				throw new Exception("')' Expected");
 			}
-			if (tk.nextToken().isOperation()) {
+			if (tk.nextToken().isTermOperation()) {
 				tk.consumeToken();
-				evalExpression(tk);
+				evalTerm(tk);
+			} else if (tk.nextToken().isFactorOperation()) {
+				tk.consumeToken();
+				evalFactor(tk);
 			}
+		} else if (tk.nextToken().isValue()) {
+			tk.consumeToken();
+		} else if (tk.matchTokens(TokenType.IDENTIFIER)) {
+			tk.consumeToken();
 		} else if (tk.matchTokens(TokenType.COLON) 
 				|| tk.matchTokens(TokenType.EOL)
 				|| tk.matchTokens(TokenType.COMMA)) {
-			return;
+			// return;
 		} else {
-			throw new Exception("Unexpected Token");
+			throw new Exception("Unexpected Token " + tk.nextToken());
 		}
-		
+		// System.out.println("Exit  F " + tk.nextToken());
 	}
-
 }

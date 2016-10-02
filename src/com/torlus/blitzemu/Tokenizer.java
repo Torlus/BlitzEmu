@@ -82,7 +82,7 @@ public class Tokenizer {
 	private void tokenizeLine(int lineNo, String line) throws Exception {
 		Pattern pLabel = Pattern.compile("^\\.[a-zA-Z0-9_]+:");
 		Pattern pIdentifier = Pattern.compile("^[a-zA-Z][a-zA-Z0-9\\\\_]*");
-		Pattern pNumber = Pattern.compile("^\\$?[0-9a-f]+(\\.[0-9]+)*");
+		Pattern pNumber = Pattern.compile("^-?\\$?[0-9a-f]+(\\.[0-9]+)*");
 		
 		boolean inString = false;
 		String currentString = "";

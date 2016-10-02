@@ -19,6 +19,7 @@ public class Blitz {
 			ex.printStackTrace();
 			return;
 		}
+		// tk.dumpTokens();
 
 		PassOne p1 = new PassOne(wb);
 		System.out.println("*** Compiler - Pass #1");
@@ -29,6 +30,8 @@ public class Blitz {
 			// tk.dumpRemainingTokens();
 			return;
 		}
+
+		System.out.println("*** Done.");
 	}
 	
 }

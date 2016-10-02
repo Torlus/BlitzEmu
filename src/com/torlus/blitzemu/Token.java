@@ -19,11 +19,18 @@ public class Token {
 		this.type = type;
 		this.line = line;
 		if (type == TokenType.INTEGER) {
-			if (value.charAt(0) == '$') {
-				this.intValue = Integer.valueOf(value.substring(1), 16);
-			} else {
-				this.intValue = Integer.valueOf(value);				
+			boolean negative = false;
+			if (value.charAt(0) == '-') {
+				value = value.substring(1);
+				negative = true;
 			}
+			if (value.charAt(0) == '$') {
+				intValue = Integer.valueOf(value.substring(1), 16);
+			} else {
+				intValue = Integer.valueOf(value);				
+			}
+			if (negative)
+				intValue = -intValue; 
 		} else if (type == TokenType.FLOAT) {
 			this.floatValue = Float.valueOf(value);
 		} else {
@@ -44,23 +51,30 @@ public class Token {
 	public boolean isValue() {
 		switch(type) {
 		case STRING:
-		case IDENTIFIER:
 			return true;
 		default:
 			return isNumeric();
 		}
 	}
 
-	public boolean isOperation() {
+	public boolean isTermOperation() {
 		switch(type) {
 		case PLUS:
 		case MINUS:
+			return true;
+		default:
+			return false;
+		}
+	}
+	
+	public boolean isFactorOperation() {
+		switch(type) {
 		case STAR:
 		case SLASH:
 			return true;
 		default:
 			return false;
-		}
+		}		
 	}
 	
 	public boolean isComparison() {
