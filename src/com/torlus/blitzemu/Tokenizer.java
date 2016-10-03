@@ -44,7 +44,9 @@ public class Tokenizer {
 	public void seek(int position) {
 		this.position = position;
 	}
-	
+	public Token get(int index) {
+		return tokens.get(index);
+	}
 	
 	public boolean matchTokens(TokenType... args) {		
 		return matchTokens(0, args);

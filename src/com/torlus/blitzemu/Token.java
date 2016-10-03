@@ -12,6 +12,11 @@ public class Token {
 	public Integer intValue = null;
 	public Float floatValue = null;
 	
+	public int truePosition = -1;
+	public int falsePosition = -1;
+	public boolean inline = false;
+	public String loopIdentifier = null;
+	
 	public Token(TokenType type, int line) {
 		this(type, line, null);
 	}
