@@ -22,18 +22,26 @@ public class Blitz {
 		}
 		// tk.dumpTokens();
 
-		Preprocessor p = new Preprocessor(wb);
-		System.out.println("*** Compiler - Preprocessor");
+		Preprocessor pp = new Preprocessor(wb);
+		System.out.println("*** Preprocessor");
 		try {
-			p.eval(tk);
+			pp.eval(tk);
 		} catch (Exception ex) {
 			ex.printStackTrace();
 			// tk.dumpRemainingTokens();
 			return;
 		}
 
-		
-		
+		tk.reset();
+		Interpreter it = new Interpreter(wb);
+		System.out.println("*** Interpreter");
+		try {
+			it.eval(tk);
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			// tk.dumpRemainingTokens();
+			return;
+		}
 		
 		System.out.println("*** Done.");
 	}

@@ -53,7 +53,7 @@ public class Value {
 	}
 	
 	
-	public void intApply(Token op, Value v) {
+	private void intApply(Token op, Value v) {
 		switch(op.type) {
 		case PLUS:
 			switch(v.type) {
@@ -116,7 +116,7 @@ public class Value {
 		}
 	}
 
-	public void floatApply(Token op, Value v) {
+	private void floatApply(Token op, Value v) {
 		switch(op.type) {
 		case PLUS:
 			switch(v.type) {
@@ -176,7 +176,7 @@ public class Value {
 		
 	}
 
-	public void stringApply(Token op, Value v) {
+	private void stringApply(Token op, Value v) {
 		switch(op.type) {
 		case PLUS:
 			switch(v.type) {
@@ -196,6 +196,20 @@ public class Value {
 		default:
 			error(op, v);		
 		}
+	}
+	
+	public Value negate() {
+		switch(type) {
+		case INTEGER:
+			intValue = -intValue;
+			break;
+		case FLOAT:
+			floatValue = -floatValue;
+			break;
+		default:
+			throw new RuntimeException("Unable to negate " + this);
+		}
+		return this;		
 	}
 	
 	@Override

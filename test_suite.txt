@@ -1,5 +1,7 @@
 a=2+3*4
 Print a
 
+b=-2+a
+Print a," ",b
 
 End

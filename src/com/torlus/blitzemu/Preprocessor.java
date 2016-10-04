@@ -2,13 +2,14 @@ package com.torlus.blitzemu;
 
 public class Preprocessor {
 
-	private Workbench ws;
+	private Workbench wb;
 
-	public Preprocessor(Workbench ws) {
-		this.ws = ws;
+	public Preprocessor(Workbench wb) {
+		this.wb = wb;
 	}
 
 	public void eval(Tokenizer tk) throws Exception {
+		tk.reset();
 		while (!tk.matchTokens(TokenType.EOF)) {
 			// End
 			if (tk.matchTokens(TokenType.END)) {
