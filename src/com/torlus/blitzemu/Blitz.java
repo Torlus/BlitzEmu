@@ -13,7 +13,8 @@ public class Blitz {
 
 		FileInputStream in = null;
 		try {
-			in = new FileInputStream("jps" + File.separator + "src_overtaking.txt");
+			// in = new FileInputStream("jps" + File.separator + "src_overtaking.txt");
+			in = new FileInputStream("test_suite.txt");
 			tk.tokenize(in);
 		} catch (Exception ex) {
 			ex.printStackTrace();
@@ -21,16 +22,19 @@ public class Blitz {
 		}
 		// tk.dumpTokens();
 
-		PassOne p1 = new PassOne(wb);
-		System.out.println("*** Compiler - Pass #1");
+		Preprocessor p = new Preprocessor(wb);
+		System.out.println("*** Compiler - Preprocessor");
 		try {
-			p1.eval(tk);
+			p.eval(tk);
 		} catch (Exception ex) {
 			ex.printStackTrace();
 			// tk.dumpRemainingTokens();
 			return;
 		}
 
+		
+		
+		
 		System.out.println("*** Done.");
 	}
 	

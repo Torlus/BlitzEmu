@@ -97,7 +97,7 @@ public class Token {
 	}
 	
 	
-	
+	@Override
 	public String toString() {
 		String res = n5.format(line);
 		res += " " + type.name();
