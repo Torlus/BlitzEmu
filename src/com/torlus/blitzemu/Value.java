@@ -30,12 +30,17 @@ public class Value {
 		}
 	}
 
+	private String applyInfo(Token op, Value v) {
+		return "(" + this + ", " + op + ", " + v + ")";
+	}
+	
 	private void error(Token op, Value v) {
-		throw new RuntimeException("Unable to apply() for (" + this + ", " + op + ", " + v + ")");
+		throw new RuntimeException("Unable to apply() for " + applyInfo(op, v));
 	}
 
 	
 	public Value apply(Token op, Value v) {
+		System.out.println(applyInfo(op, v));
 		switch(type) {
 		case INTEGER:
 			intApply(op, v);
@@ -49,6 +54,7 @@ public class Value {
 		default:
 			error(op, v);
 		}
+		System.out.println("yield " + this);
 		return this;
 	}
 	

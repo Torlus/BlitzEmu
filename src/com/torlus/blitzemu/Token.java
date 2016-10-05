@@ -106,7 +106,7 @@ public class Token {
 		} else if (intValue != null) {
 			res += " I:[" + intValue + "]";
 		} else if (floatValue != null) {
-			res += " F:[" + intValue + "]";			
+			res += " F:[" + floatValue + "]";			
 		}
 		return res;
 	}

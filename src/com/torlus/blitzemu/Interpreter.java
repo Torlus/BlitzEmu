@@ -255,7 +255,7 @@ public class Interpreter {
 	}
 	
 	public Value evalExpression(int level,Tokenizer tk) throws Exception {
-		// System.out.println("Enter E " + tk.nextToken());
+		System.out.println("Enter E " + tk.nextToken());
 		if (tk.nextToken().isValue() || tk.matchTokens(TokenType.IDENTIFIER)) {
 			if (tk.nextToken(1).isNumeric()) {
 				// <E> <Negative number> -> <E> + <Negative number>
@@ -288,7 +288,7 @@ public class Interpreter {
 	}
 
 	public Value evalTerm(int level, Tokenizer tk) throws Exception {
-		// System.out.println("Enter T " + tk.nextToken());
+		System.out.println("Enter T " + tk.nextToken());
 		if (tk.nextToken().isValue() || tk.matchTokens(TokenType.IDENTIFIER)) {
 			if (tk.nextToken(1).isFactorOperation()) {
 				Value value = null;
@@ -311,7 +311,7 @@ public class Interpreter {
 	}
 	
 	public Value evalFactor(int level, Tokenizer tk) throws Exception {
-		// System.out.println("Enter F " + tk.nextToken());
+		System.out.println("Enter F " + tk.nextToken());
 		if (tk.matchTokens(TokenType.MINUS)) {
 			tk.consumeToken();
 			return evalExpression(level, tk).negate();
@@ -320,28 +320,12 @@ public class Interpreter {
 			tk.consumeToken(2);
 			Vector<Value> params = evalParameters(level, tk);
 			Value value = wb.evalFunction(name, params);
-			if (tk.nextToken().isTermOperation()) {
-				Token op = tk.nextToken();
-				tk.consumeToken();
-				return value.apply(op, evalTerm(level, tk)); 
-			} else if (tk.nextToken().isFactorOperation()) {
-				Token op = tk.nextToken();				
-				tk.consumeToken();
-				return value.apply(op, evalFactor(level, tk)); 
-			}
+			tk.consumeToken();
 			return value;
 		} else if (tk.matchTokens(TokenType.LPAREN)) {
 			tk.consumeToken();
 			Value value = evalExpression(level, tk);
-			if (tk.nextToken().isTermOperation()) {
-				Token op = tk.nextToken();
-				tk.consumeToken();
-				return value.apply(op, evalTerm(level, tk));
-			} else if (tk.nextToken().isFactorOperation()) {
-				Token op = tk.nextToken();				
-				tk.consumeToken();
-				return value.apply(op, evalFactor(level, tk));
-			}
+			tk.consumeToken();
 			return value;
 		} else if (tk.nextToken().isValue()) {
 			Token v = tk.nextToken();
@@ -359,6 +343,4 @@ public class Interpreter {
 		}
 		// System.out.println("Exit  F " + tk.nextToken());
 	}
-
-	
 }
