@@ -247,84 +247,64 @@ public class Preprocessor {
 	
 	public void evalExpression(Tokenizer tk) throws Exception {
 		// System.out.println("Enter E " + tk.nextToken());
-		if (tk.nextToken().isValue() || tk.matchTokens(TokenType.IDENTIFIER)) {
-			if (tk.nextToken(1).isNumeric()) {
+		try {
+			evalTerm(tk);
+			if (tk.nextToken().isNumeric()) {
 				// <E> <Negative number> -> <E> + <Negative number>
+				evalTerm(tk);
+			} else if (tk.nextToken().isTermOperation()) {
 				tk.consumeToken();
 				evalExpression(tk);
-			} else if (tk.nextToken(1).isTermOperation()) {
-				tk.consumeToken(2);
-				evalExpression(tk);
-			} else {
-				evalTerm(tk);
 			}
-		} else {
-			evalTerm(tk);
+		} finally {
+			// System.out.println("Exit  E " + tk.nextToken());			
 		}
-		// System.out.println("Exit  E " + tk.nextToken());
 	}
 
 	public void evalTerm(Tokenizer tk) throws Exception {
 		// System.out.println("Enter T " + tk.nextToken());
-		if (tk.nextToken().isValue() || tk.matchTokens(TokenType.IDENTIFIER)) {
-			if (tk.nextToken(1).isFactorOperation()) {
-				tk.consumeToken(2);
-				evalExpression(tk);
-			} else {
-				evalFactor(tk);
-			}
-		} else {
+		try {
 			evalFactor(tk);
+			if (tk.nextToken().isFactorOperation()) {
+				tk.consumeToken();
+				evalExpression(tk);
+			}
+		} finally {
+			// System.out.println("Exit  T " + tk.nextToken());			
 		}
-		// System.out.println("Exit  T " + tk.nextToken());
 	}
 	
 	public void evalFactor(Tokenizer tk) throws Exception {
 		// System.out.println("Enter F " + tk.nextToken());
-		if (tk.matchTokens(TokenType.MINUS)) {
-			tk.consumeToken();
-			evalExpression(tk);
-		} else if (tk.matchTokens(TokenType.IDENTIFIER, TokenType.LPAREN)) {
-			tk.consumeToken(2);
-			evalParameters(tk);
-			if (tk.matchTokens(TokenType.RPAREN)) {
-				tk.consumeToken();
-			} else {
-				throw new Exception("')' Expected");
-			}
-			if (tk.nextToken().isTermOperation()) {
-				tk.consumeToken();
-				evalTerm(tk);
-			} else if (tk.nextToken().isFactorOperation()) {
+		try {
+			if (tk.matchTokens(TokenType.MINUS)) {
 				tk.consumeToken();
 				evalFactor(tk);
-			}
-		} else if (tk.matchTokens(TokenType.LPAREN)) {
-			tk.consumeToken();
-			evalExpression(tk);
-			if (tk.matchTokens(TokenType.RPAREN)) {
+			} else if (tk.matchTokens(TokenType.IDENTIFIER, TokenType.LPAREN)) {
+				tk.consumeToken(2);
+				evalParameters(tk);
+				if (tk.matchTokens(TokenType.RPAREN)) {
+					tk.consumeToken();
+				} else {
+					throw new Exception("')' Expected");
+				}
+			} else if (tk.matchTokens(TokenType.LPAREN)) {
+				tk.consumeToken();
+				evalExpression(tk);
+				if (tk.matchTokens(TokenType.RPAREN)) {
+					tk.consumeToken();
+				} else {
+					throw new Exception("')' Expected");
+				}
+			} else if (tk.nextToken().isValue()) {
+				tk.consumeToken();
+			} else if (tk.matchTokens(TokenType.IDENTIFIER)) {
 				tk.consumeToken();
 			} else {
-				throw new Exception("')' Expected");
+				throw new Exception("Unexpected Token " + tk.nextToken());
 			}
-			if (tk.nextToken().isTermOperation()) {
-				tk.consumeToken();
-				evalTerm(tk);
-			} else if (tk.nextToken().isFactorOperation()) {
-				tk.consumeToken();
-				evalFactor(tk);
-			}
-		} else if (tk.nextToken().isValue()) {
-			tk.consumeToken();
-		} else if (tk.matchTokens(TokenType.IDENTIFIER)) {
-			tk.consumeToken();
-		} /*else if (tk.matchTokens(TokenType.COLON) 
-				|| tk.matchTokens(TokenType.EOL)
-				|| tk.matchTokens(TokenType.COMMA)) {
-			// return;
-		}*/ else {
-			throw new Exception("Unexpected Token " + tk.nextToken());
+		} finally {
+			// System.out.println("Exit  F " + tk.nextToken());
 		}
-		// System.out.println("Exit  F " + tk.nextToken());
 	}
 }

@@ -255,92 +255,74 @@ public class Interpreter {
 	}
 	
 	public Value evalExpression(int level,Tokenizer tk) throws Exception {
-		System.out.println("Enter E " + tk.nextToken());
-		if (tk.nextToken().isValue() || tk.matchTokens(TokenType.IDENTIFIER)) {
-			if (tk.nextToken(1).isNumeric()) {
+		// System.out.println("Enter E " + tk.nextToken());
+		try {
+			Value value = evalTerm(level, tk);
+			if (tk.nextToken().isNumeric()) {
 				// <E> <Negative number> -> <E> + <Negative number>
-				Value value = null;
-				if (tk.matchTokens(TokenType.IDENTIFIER)) {
-					value = wb.getVar(level, tk.nextToken().value);
-				} else {
-					value = new Value(tk.nextToken());
-				}
-				tk.consumeToken();
-				return value.apply(new Token(TokenType.PLUS, 0), evalExpression(level, tk));
-			} else if (tk.nextToken(1).isTermOperation()) {
-				Value value = null;
-				if (tk.matchTokens(TokenType.IDENTIFIER)) {
-					value = wb.getVar(level, tk.nextToken().value);
-				} else {
-					value = new Value(tk.nextToken());
-				}
-				tk.consumeToken();
+				return value.apply(new Token(TokenType.PLUS, 0), evalTerm(level, tk));
+			} else if (tk.nextToken().isTermOperation()) {
 				Token op = tk.nextToken();
 				tk.consumeToken();
 				return value.apply(op, evalExpression(level, tk));
 			} else {
-				return evalTerm(level, tk);
+				return value;
 			}
-		} else {
-			return evalTerm(level, tk);
+		} finally {
+			// System.out.println("Exit  E " + tk.nextToken());			
 		}
-		// System.out.println("Exit  E " + tk.nextToken());
 	}
 
 	public Value evalTerm(int level, Tokenizer tk) throws Exception {
-		System.out.println("Enter T " + tk.nextToken());
-		if (tk.nextToken().isValue() || tk.matchTokens(TokenType.IDENTIFIER)) {
-			if (tk.nextToken(1).isFactorOperation()) {
-				Value value = null;
-				if (tk.matchTokens(TokenType.IDENTIFIER)) {
-					value = wb.getVar(level, tk.nextToken().value);
-				} else {
-					value = new Value(tk.nextToken());
-				}
-				tk.consumeToken();
+		// System.out.println("Enter T " + tk.nextToken());
+		try {
+			Value value = evalFactor(level, tk);
+			if (tk.nextToken().isFactorOperation()) {
 				Token op = tk.nextToken();
 				tk.consumeToken();
-				return value.apply(op, evalExpression(level, tk));
+				return value.apply(op, evalFactor(level, tk));
 			} else {
-				return evalFactor(level, tk);
+				return value;
 			}
-		} else {
-			return evalFactor(level, tk);
+		} finally {
+			// System.out.println("Exit  T " + tk.nextToken());			
 		}
-		// System.out.println("Exit  T " + tk.nextToken());
 	}
 	
 	public Value evalFactor(int level, Tokenizer tk) throws Exception {
-		System.out.println("Enter F " + tk.nextToken());
-		if (tk.matchTokens(TokenType.MINUS)) {
-			tk.consumeToken();
-			return evalExpression(level, tk).negate();
-		} else if (tk.matchTokens(TokenType.IDENTIFIER, TokenType.LPAREN)) {
-			String name = tk.nextToken().value;
-			tk.consumeToken(2);
-			Vector<Value> params = evalParameters(level, tk);
-			Value value = wb.evalFunction(name, params);
-			tk.consumeToken();
-			return value;
-		} else if (tk.matchTokens(TokenType.LPAREN)) {
-			tk.consumeToken();
-			Value value = evalExpression(level, tk);
-			tk.consumeToken();
-			return value;
-		} else if (tk.nextToken().isValue()) {
-			Token v = tk.nextToken();
-			tk.consumeToken();
-			return new Value(v);
-		} else if (tk.matchTokens(TokenType.IDENTIFIER)) {
-			String name = tk.nextToken().value; 
-			tk.consumeToken();
-			Value value = wb.getVar(level, name);
-			if (value == null)
-				throw new Exception("Undefined Variable " + name);
-			return value;
-		} else {
-			throw new Exception("Unexpected Token " + tk.nextToken());
+		// System.out.println("Enter F " + tk.nextToken());
+		try {
+			if (tk.matchTokens(TokenType.MINUS)) {
+				tk.consumeToken();
+				return evalFactor(level, tk).negate();
+			} else if (tk.matchTokens(TokenType.IDENTIFIER, TokenType.LPAREN)) {
+				String name = tk.nextToken().value;
+				tk.consumeToken(2);
+				Vector<Value> params = evalParameters(level, tk);
+				Value value = wb.evalFunction(name, params);
+				tk.consumeToken();
+				return value;
+			} else if (tk.matchTokens(TokenType.LPAREN)) {
+				tk.consumeToken();
+				Value value = evalExpression(level, tk);
+				tk.consumeToken();
+				return value;
+			} else if (tk.nextToken().isValue()) {
+				Token v = tk.nextToken();
+				tk.consumeToken();
+				return new Value(v);
+			} else if (tk.matchTokens(TokenType.IDENTIFIER)) {
+				String name = tk.nextToken().value; 
+				tk.consumeToken();
+				Value value = wb.getVar(level, name);
+				if (value == null)
+					throw new Exception("Undefined Variable " + name);
+				return value;
+			} else {
+				throw new Exception("Unexpected Token " + tk.nextToken());
+			}
+		} finally {
+			// System.out.println("Exit  F " + tk.nextToken());
 		}
-		// System.out.println("Exit  F " + tk.nextToken());
 	}
 }

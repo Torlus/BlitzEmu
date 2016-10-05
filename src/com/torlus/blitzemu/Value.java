@@ -40,7 +40,7 @@ public class Value {
 
 	
 	public Value apply(Token op, Value v) {
-		System.out.println(applyInfo(op, v));
+		// System.out.println(applyInfo(op, v));
 		switch(type) {
 		case INTEGER:
 			intApply(op, v);
@@ -54,7 +54,7 @@ public class Value {
 		default:
 			error(op, v);
 		}
-		System.out.println("yield " + this);
+		// System.out.println("yield " + this);
 		return this;
 	}
 	
