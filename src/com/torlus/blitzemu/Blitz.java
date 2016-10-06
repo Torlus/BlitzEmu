@@ -1,6 +1,5 @@
 package com.torlus.blitzemu;
 
-import java.io.File;
 import java.io.FileInputStream;
 
 public class Blitz {

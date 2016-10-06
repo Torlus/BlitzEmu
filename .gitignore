@@ -1,5 +1,9 @@
+.DS_Store
 .classpath
 .project
 .settings
 classes
 jps
+lib
+native
+*.launch
