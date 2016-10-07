@@ -20,7 +20,7 @@ public class Formats {
 		int acc = 0;
 		for(int n = 0; n < len; n++) {
 			int value = is.read();
-			acc = (acc << 8) | (byte)(value & 0xff);
+			acc = (acc << 8) | (value & 0xff);
 		}
 		return acc;
 	}
@@ -79,7 +79,22 @@ public class Formats {
 		FileInputStream fis = new FileInputStream(new File(source));
 		byte buf[] = new byte[1024];
 		fis.read(buf, 0, 12); // FORM <len> ILBM
+		
 		boolean done = false;
+		
+		// BMHD
+		int width = 0, height = 0, x = 0, y = 0;
+		int nPlanes = 0, masking = 0, compression = 0;
+		int transparentColor = 0;
+		int xAspect = 0, yAspect = 0;
+		int pageWidth = 0, pageHeight = 0;
+		// CMAP
+		int cmapRed[] = new int[256];
+		int cmapGreen[] = new int[256];
+		int cmapBlue[] = new int[256];
+		int cmapColors = 0;
+
+		
 		while(!done) {
 			fis.read(buf, 0, 4);
 			StringBuilder sb = new StringBuilder();
@@ -88,7 +103,69 @@ public class Formats {
 			}
 			int len = inLE(fis, 4);
 			System.out.println("Chunk " + sb.toString() + " len=" + len);
-			if ("BODY".equals(sb.toString())) {
+			if ("BMHD".equals(sb.toString())) {
+				width = inLE(fis, 2);
+				height = inLE(fis, 2);
+				x = inLE(fis, 2);
+				y = inLE(fis, 2);
+				nPlanes = inLE(fis, 1);
+				masking = inLE(fis, 1);
+				compression = inLE(fis, 1);
+				inLE(fis, 1); // pad1
+				transparentColor = inLE(fis, 2);
+				xAspect = inLE(fis, 1);
+				yAspect = inLE(fis ,1);
+				pageWidth = inLE(fis, 2);
+				pageHeight = inLE(fis, 2);
+				
+				
+				System.out.println("width=" + width + " height=" + height);
+				System.out.println("x=" + x + " y=" + y);
+				System.out.println("nPlanes=" + nPlanes + " masking=" + masking
+						+ " compression=" + compression);
+				System.out.println("transparentColor=" + transparentColor);
+				System.out.println("xAspect=" + xAspect + " yAspect=" + yAspect);
+				System.out.println("pageWidth=" + pageWidth + " pageHeight=" + pageHeight);
+			} else if ("CMAP".equals(sb.toString())) {
+				cmapColors = len / 3;
+				for(int n = 0; n < cmapColors; n++) {
+					cmapRed[3 * n + 0] = inLE(fis, 1);
+					cmapGreen[3 * n + 1] = inLE(fis, 1);
+					cmapBlue[3 * n + 2] = inLE(fis, 1);
+					System.out.println("" + n + ") R=" + cmapRed[n] + " G=" + cmapGreen[n] + " B=" + cmapBlue[n]);
+				}
+				if ((len & 1) == 1)
+					inLE(fis, 1);
+			} else if ("BODY".equals(sb.toString())) {
+				byte uncompressed[] = new byte[width * height * nPlanes / 8];
+				if (compression == 1) {
+					int sp = 0, dp = 0;
+					while(sp < len) {
+						fis.read(buf, 0, 1);
+						sp++;
+						int sw = buf[0];
+						if (sw == -128) {
+							// NOP
+						} else if (sw < 0) {
+							sw = -sw;
+							int sz = sw + 1;
+							fis.read(buf, 0, 1);
+							sp++;
+							for(int n = 0; n < sz; n++)
+								uncompressed[dp++] = buf[0];
+						} else if (sw >= 0) {
+							int sz = sw + 1;
+							fis.read(uncompressed, dp, sz);
+							dp += sz;
+							sp += sz;
+						}
+					}
+					System.out.println("Uncompressed size=" + dp);
+				}
+				
+				
+				
+				
 				done = true;
 			} else {
 				fis.read(buf, 0, len);
