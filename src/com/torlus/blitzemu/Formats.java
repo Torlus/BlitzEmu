@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 
 public class Formats {
@@ -15,6 +16,15 @@ public class Formats {
 		}
 	}
 
+	public static int inLE(InputStream is, int len) throws IOException {
+		int acc = 0;
+		for(int n = 0; n < len; n++) {
+			int value = is.read();
+			acc = (acc << 8) | (byte)(value & 0xff);
+		}
+		return acc;
+	}
+	
 	public static void smp2wav(String source) throws IOException {
 		FileInputStream fis = new FileInputStream(new File(source));
 		byte buf[] = new byte[1024];
@@ -65,5 +75,32 @@ public class Formats {
 		fis.close();
 		
 	}
+	public static void iff2img(String source) throws IOException {
+		FileInputStream fis = new FileInputStream(new File(source));
+		byte buf[] = new byte[1024];
+		fis.read(buf, 0, 12); // FORM <len> ILBM
+		boolean done = false;
+		while(!done) {
+			fis.read(buf, 0, 4);
+			StringBuilder sb = new StringBuilder();
+			for(int n = 0; n < 4; n++) {
+				sb.append((char)buf[n]);	
+			}
+			int len = inLE(fis, 4);
+			System.out.println("Chunk " + sb.toString() + " len=" + len);
+			if ("BODY".equals(sb.toString())) {
+				done = true;
+			} else {
+				fis.read(buf, 0, len);
+			}
+		}
+		
+		fis.close();
+	}
 	
+	public static void main(String args[]) throws Exception {
+		System.out.println("*** Start");
+		String source = "jps" + File.separator + "data" + File.separator + "Title.iff";
+		iff2img(source);
+	}
 }
