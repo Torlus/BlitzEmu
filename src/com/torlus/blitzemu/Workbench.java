@@ -1,14 +1,55 @@
 package com.torlus.blitzemu;
 
+import java.io.File;
 import java.util.TreeMap;
 import java.util.Vector;
 
+import org.newdawn.slick.Image;
+import org.newdawn.slick.openal.Audio;
+import org.newdawn.slick.openal.SoundStore;
+
 public class Workbench {
-	// Copypasta of "Workspace" of the JagNetlists compiler project.
-	// I don't know if this class will be of any use, but I couldn't 
-	// let such an Amigq-related project without this pun.
 	
+	private String assetsPath;
 	private Vector<TreeMap<String, Value>> variables = new Vector<>();
+
+	private TreeMap<Integer, Audio> sounds = new TreeMap<>();
+	private TreeMap<Integer, Audio> modules = new TreeMap<>();
+	private class ImageExt {
+		public Image image;
+		public int bpp;
+	}
+	private TreeMap<Integer, ImageExt> bitmaps = new TreeMap<>();
+	
+	
+	
+	private Vector<Runnable> uiTasks = new Vector<>();
+	
+	public Workbench(String assetsPath) {
+		if (assetsPath == null)
+			assetsPath = ".";
+		if (!assetsPath.endsWith(File.separator))
+			assetsPath += File.separator;
+		this.assetsPath = assetsPath;
+	}
+	
+	public void init() {
+		SoundStore.get().init();
+	}
+	
+	public void runOnUIThread(Runnable r) {
+		synchronized(uiTasks) {
+			uiTasks.add(r);
+		}
+	}
+	public Runnable getTask() {
+		Runnable task = null;
+		synchronized(uiTasks) {
+			if (!uiTasks.isEmpty())
+				task = uiTasks.remove(0);
+		}
+		return task;
+	}
 	
 	public void enterScope() {
 		variables.add(new TreeMap<String, Value>());
@@ -73,6 +114,35 @@ public class Workbench {
 				}
 			}
 			System.out.println(line);
+		} else if ("LoadModule".equals(name)) {
+			int index = params.remove(0).intValue;
+			String source = assetsPath + File.separator + params.remove(0).value;
+			Audio audio = SoundStore.get().getMOD(source);
+			modules.put(index, audio);
+		} else if ("LoadSound".equals(name)) {
+			int index = params.remove(0).intValue;
+			String source = assetsPath + File.separator + params.remove(0).value;
+			Formats.smp2wav(source);
+			Audio audio = SoundStore.get().getWAV(source + ".wav");
+			sounds.put(index, audio);
+		} else if ("BitMap".equals(name)) {
+			int index = params.remove(0).intValue;
+			int width = params.remove(0).intValue;
+			int height = params.remove(0).intValue;
+			int bpp = params.remove(0).intValue;
+			runOnUIThread( new Runnable() {
+				@Override
+				public void run() { 
+					try {
+						ImageExt ie = new ImageExt();
+						ie.image = new Image(width, height);
+						ie.bpp = bpp;
+						bitmaps.put(index, ie);
+					} catch(Exception ex) {
+						ex.printStackTrace();
+					}
+				}
+			});
 		} else {
 			throw new Exception("Unknown Command " + name);			
 		}
