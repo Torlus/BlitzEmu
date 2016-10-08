@@ -8,6 +8,8 @@ import org.newdawn.slick.Image;
 import org.newdawn.slick.openal.Audio;
 import org.newdawn.slick.openal.SoundStore;
 
+import com.tinyline.svg.ImageLoader;
+
 public class Workbench {
 	
 	private String assetsPath;
@@ -116,12 +118,12 @@ public class Workbench {
 			System.out.println(line);
 		} else if ("LoadModule".equals(name)) {
 			int index = params.remove(0).intValue;
-			String source = assetsPath + File.separator + params.remove(0).value;
+			String source = assetsPath + params.remove(0).value;
 			Audio audio = SoundStore.get().getMOD(source);
 			modules.put(index, audio);
 		} else if ("LoadSound".equals(name)) {
 			int index = params.remove(0).intValue;
-			String source = assetsPath + File.separator + params.remove(0).value;
+			String source = assetsPath + params.remove(0).value;
 			Formats.smp2wav(source);
 			Audio audio = SoundStore.get().getWAV(source + ".wav");
 			sounds.put(index, audio);
@@ -143,6 +145,23 @@ public class Workbench {
 					}
 				}
 			});
+		} else if ("LoadBitMap".equals(name)) {
+			int index = params.remove(0).intValue;
+			String source = assetsPath + params.remove(0).value;
+			Formats.iff2tga(source);
+			runOnUIThread( new Runnable() {
+				@Override
+				public void run() { 
+					try {
+						ImageExt ie = bitmaps.get(index);
+						ie.image = new Image(source + ".tga");
+					} catch(Exception ex) {
+						ex.printStackTrace();
+					}
+				}
+			});
+			
+
 		} else {
 			throw new Exception("Unknown Command " + name);			
 		}

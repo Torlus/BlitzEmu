@@ -75,7 +75,7 @@ public class Formats {
 		fis.close();
 		
 	}
-	public static void iff2img(String source) throws IOException {
+	public static void iff2tga(String source) throws IOException {
 		FileInputStream fis = new FileInputStream(new File(source));
 		byte buf[] = new byte[1024];
 		fis.read(buf, 0, 12); // FORM <len> ILBM
@@ -83,15 +83,15 @@ public class Formats {
 		boolean done = false;
 		
 		// BMHD
-		int width = 0, height = 0, x = 0, y = 0;
+		int width = 0, height = 0, X = 0, Y = 0;
 		int nPlanes = 0, masking = 0, compression = 0;
 		int transparentColor = 0;
 		int xAspect = 0, yAspect = 0;
 		int pageWidth = 0, pageHeight = 0;
 		// CMAP
-		int cmapRed[] = new int[256];
-		int cmapGreen[] = new int[256];
-		int cmapBlue[] = new int[256];
+		byte cmapRed[] = new byte[256];
+		byte cmapGreen[] = new byte[256];
+		byte cmapBlue[] = new byte[256];
 		int cmapColors = 0;
 
 		
@@ -106,8 +106,8 @@ public class Formats {
 			if ("BMHD".equals(sb.toString())) {
 				width = inLE(fis, 2);
 				height = inLE(fis, 2);
-				x = inLE(fis, 2);
-				y = inLE(fis, 2);
+				X = inLE(fis, 2);
+				Y = inLE(fis, 2);
 				nPlanes = inLE(fis, 1);
 				masking = inLE(fis, 1);
 				compression = inLE(fis, 1);
@@ -120,7 +120,7 @@ public class Formats {
 				
 				
 				System.out.println("width=" + width + " height=" + height);
-				System.out.println("x=" + x + " y=" + y);
+				System.out.println("x=" + X + " y=" + Y);
 				System.out.println("nPlanes=" + nPlanes + " masking=" + masking
 						+ " compression=" + compression);
 				System.out.println("transparentColor=" + transparentColor);
@@ -129,15 +129,21 @@ public class Formats {
 			} else if ("CMAP".equals(sb.toString())) {
 				cmapColors = len / 3;
 				for(int n = 0; n < cmapColors; n++) {
-					cmapRed[3 * n + 0] = inLE(fis, 1);
-					cmapGreen[3 * n + 1] = inLE(fis, 1);
-					cmapBlue[3 * n + 2] = inLE(fis, 1);
-					System.out.println("" + n + ") R=" + cmapRed[n] + " G=" + cmapGreen[n] + " B=" + cmapBlue[n]);
+					cmapRed[n] = (byte)inLE(fis, 1);
+					cmapGreen[n] = (byte)inLE(fis, 1);
+					cmapBlue[n] = (byte)inLE(fis, 1);
+					System.out.println("" + n + ") R=" + (cmapRed[n] & 0xff) 
+							+ " G=" + (cmapGreen[n] & 0xff)
+							+ " B=" + (cmapBlue[n] & 0xff));
 				}
 				if ((len & 1) == 1)
 					inLE(fis, 1);
 			} else if ("BODY".equals(sb.toString())) {
-				byte uncompressed[] = new byte[width * height * nPlanes / 8];
+				int paddedWidth = width;
+				if ((width & 0xf) != 0x00) {
+					paddedWidth = (paddedWidth + 0x0f) & 0xffffff00;
+				}
+				byte uncompressed[] = new byte[paddedWidth * height * nPlanes / 8];
 				if (compression == 1) {
 					int sp = 0, dp = 0;
 					while(sp < len) {
@@ -161,23 +167,69 @@ public class Formats {
 						}
 					}
 					System.out.println("Uncompressed size=" + dp);
+				} else {
+					fis.read(uncompressed, 0, len);
 				}
+				int scr[] = new int[width * height];
+				int fullScanlineSize = paddedWidth * nPlanes / 8;
+				for(int y = 0; y < height; y++) {
+					for(int x = 0; x < width; x++) {
+						for(int p = 0; p < nPlanes; p++) {
+							 int bytePos = (y * fullScanlineSize) 
+									 + (p * paddedWidth / 8)
+									 + (x / 8);
+							 int bitPos = 7 - (x & 0x7);
+							 if ((uncompressed[bytePos] & (1 << bitPos)) != 0) {
+								 // scr[width * y + x] |= (1 << (nPlanes - p - 1));
+								 scr[width * y + x] |= (1 << p);
+							 }
+						}
+					}
+				}
+				FileOutputStream fos = new FileOutputStream(new File(source + ".tga"));
+				fos.write(0); // ID Length
+				fos.write(0); // No colormap
+				fos.write(2); // Uncompressed true-color image
 				
+				fos.write(0); // Colormap: First entry index
+				fos.write(0);
+				fos.write(0); // Colormap: Length
+				fos.write(0);
+				fos.write(0); // Bits per pixel
 				
+				fos.write(0); // X-Origin
+				fos.write(0);
+				fos.write(0); // Y-Origin
+				fos.write(0);
+				outLE(fos, width, 2); // Width in pixels
+				outLE(fos, height, 2); // Height in pixels
+				fos.write(32); // Bits per pixel
+				fos.write(0); // Image descriptor
 				
-				
+				for(int y = 0; y < height; y++) {
+					for(int x = 0; x < width; x++) {
+						int col = scr[width * (height - 1 - y) + x];
+						//System.out.print(col + ",");
+						fos.write(cmapBlue[col]);
+						fos.write(cmapGreen[col]);
+						fos.write(cmapRed[col]);
+						// fos.write(col == transparentColor ? 0 : 255);
+						fos.write(255);
+					}
+					//System.out.println("");
+				}
+				fos.close();
 				done = true;
 			} else {
 				fis.read(buf, 0, len);
 			}
 		}
-		
 		fis.close();
 	}
 	
 	public static void main(String args[]) throws Exception {
 		System.out.println("*** Start");
 		String source = "jps" + File.separator + "data" + File.separator + "Title.iff";
-		iff2img(source);
+		iff2tga(source);
 	}
 }
