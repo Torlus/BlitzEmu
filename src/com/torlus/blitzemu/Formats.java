@@ -75,6 +75,8 @@ public class Formats {
 		fis.close();
 		
 	}
+	
+	
 	public static void iff2tga(String source) throws IOException {
 		FileInputStream fis = new FileInputStream(new File(source));
 		byte buf[] = new byte[1024];
@@ -141,7 +143,7 @@ public class Formats {
 			} else if ("BODY".equals(sb.toString())) {
 				int paddedWidth = width;
 				if ((width & 0xf) != 0x00) {
-					paddedWidth = (paddedWidth + 0x0f) & 0xffffff00;
+					paddedWidth = (width + 0x0f) & 0xfffffff0;
 				}
 				byte uncompressed[] = new byte[paddedWidth * height * nPlanes / 8];
 				if (compression == 1) {
@@ -227,9 +229,113 @@ public class Formats {
 		fis.close();
 	}
 	
+	public static void smp2tga(String source) throws IOException {
+		FileInputStream fis = new FileInputStream(new File(source));
+		byte buf[] = new byte[1024];
+		int spriteNum = 0;
+		while(fis.available() > 0) {
+		
+			int width = inLE(fis, 2);
+			int height = inLE(fis, 2);
+			int nPlanes = inLE(fis, 2);
+			
+			if (width <= 0)
+				break;
+			
+			System.out.println("width=" + width + " height=" + height);
+			System.out.println("nPlanes=" + nPlanes);
+	
+			// Temporary - This is the "Decor2" palette stored in Bitmap 0
+			byte cmapRed[] = new byte[16]; 
+			byte cmapGreen[] = new byte[16];
+			byte cmapBlue[] = new byte[16];
+			int cmapColors = 0;
+	
+			int reds[] = { 0, 160, 85, 255, 136, 255, 238, 102, 255, 255, 255, 0, 0, 0, 0, 0 };
+			int grns[] = { 136, 160, 85, 255, 0, 68, 0, 34, 102, 170, 238, 0, 221, 204, 102, 0 };
+			int blus[] = { 0, 160, 85, 255, 136, 170, 0, 0, 0, 136, 0, 0, 0, 204, 255, 170 };
+			
+			cmapColors = 16;
+			for(int n = 0; n < cmapColors; n++) {
+				cmapRed[n] = (byte)reds[n];
+				cmapGreen[n] = (byte)grns[n];
+				cmapBlue[n] = (byte)blus[n];			
+			}
+			
+			int offset = 32 - 6;
+			fis.read(buf, 0, offset);
+			
+			int paddedWidth = width;
+			if ((width & 0xf) != 0x00) {
+				paddedWidth = (width + 0x0f) & 0xfffffff0;
+			}
+			System.out.println("paddedWidth=" + paddedWidth);
+			int fullScanlineSize = paddedWidth / 8;
+			
+			int scr[] = new int[width * height];
+
+			for(int p = 0; p < nPlanes; p++) {
+				byte uncompressed[] = new byte[paddedWidth * height / 8];
+				System.out.println("Expected = " + uncompressed.length);
+				int total = fis.read(uncompressed, 0, uncompressed.length);
+				System.out.println("Read() = " + total);
+				for(int y = 0; y < height; y++) {
+					for(int x = 0; x < width; x++) {
+						// for(int p = 0; p < nPlanes; p++) {
+							 int bytePos = (y * fullScanlineSize) 
+									 + (x / 8);
+							 int bitPos = 7 - (x & 0x7);
+							 if ((uncompressed[bytePos] & (1 << bitPos)) != 0) {
+								 // scr[width * y + x] |= (1 << (nPlanes - p - 1));
+								 scr[width * y + x] |= (1 << p);
+							 }
+						// }
+					}
+				}
+			}
+			FileOutputStream fos = new FileOutputStream(new File(source + "." + spriteNum + ".tga"));
+			fos.write(0); // ID Length
+			fos.write(0); // No colormap
+			fos.write(2); // Uncompressed true-color image
+			
+			fos.write(0); // Colormap: First entry index
+			fos.write(0);
+			fos.write(0); // Colormap: Length
+			fos.write(0);
+			fos.write(0); // Bits per pixel
+			
+			fos.write(0); // X-Origin
+			fos.write(0);
+			fos.write(0); // Y-Origin
+			fos.write(0);
+			outLE(fos, width, 2); // Width in pixels
+			outLE(fos, height, 2); // Height in pixels
+			fos.write(32); // Bits per pixel
+			fos.write(0); // Image descriptor
+			
+			for(int y = 0; y < height; y++) {
+				for(int x = 0; x < width; x++) {
+					int col = scr[width * (height - 1 - y) + x];
+					//System.out.print(col + ",");
+					fos.write(cmapBlue[col]);
+					fos.write(cmapGreen[col]);
+					fos.write(cmapRed[col]);
+					// fos.write(col == transparentColor ? 0 : 255);
+					fos.write(255);
+				}
+				//System.out.println("");
+			}
+			fos.close();
+			System.out.println("End of Sprite #" + spriteNum);
+			spriteNum++;
+		}
+		
+		fis.close();
+	}
+	
 	public static void main(String args[]) throws Exception {
 		System.out.println("*** Start");
-		String source = "jps" + File.separator + "data" + File.separator + "Title.iff";
-		iff2tga(source);
+		String source = "jps" + File.separator + "data" + File.separator + "tiens.shp";
+		smp2tga(source);
 	}
 }
