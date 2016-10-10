@@ -315,8 +315,10 @@ public class Interpreter {
 				String name = tk.nextToken().value; 
 				tk.consumeToken();
 				Value value = wb.getVar(level, name);
-				if (value == null)
-					throw new Exception("Undefined Variable " + name);
+				if (value == null) {
+					// throw new Exception("Undefined Variable " + name);
+					value = new Value(name);
+				}
 				return value;
 			} else {
 				throw new Exception("Unexpected Token " + tk.nextToken());

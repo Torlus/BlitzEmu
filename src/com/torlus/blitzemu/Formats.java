@@ -229,7 +229,7 @@ public class Formats {
 		fis.close();
 	}
 	
-	public static void smp2tga(String source) throws IOException {
+	public static int shp2tga(String source) throws IOException {
 		FileInputStream fis = new FileInputStream(new File(source));
 		byte buf[] = new byte[1024];
 		int spriteNum = 0;
@@ -238,6 +238,7 @@ public class Formats {
 			int width = inLE(fis, 2);
 			int height = inLE(fis, 2);
 			int nPlanes = inLE(fis, 2);
+			int transparentColor = 0;
 			
 			if (width <= 0)
 				break;
@@ -320,8 +321,8 @@ public class Formats {
 					fos.write(cmapBlue[col]);
 					fos.write(cmapGreen[col]);
 					fos.write(cmapRed[col]);
-					// fos.write(col == transparentColor ? 0 : 255);
-					fos.write(255);
+					fos.write(col == transparentColor ? 0 : 255);
+					// fos.write(255);
 				}
 				//System.out.println("");
 			}
@@ -329,13 +330,13 @@ public class Formats {
 			System.out.println("End of Sprite #" + spriteNum);
 			spriteNum++;
 		}
-		
 		fis.close();
+		return spriteNum;
 	}
 	
 	public static void main(String args[]) throws Exception {
 		System.out.println("*** Start");
-		String source = "jps" + File.separator + "data" + File.separator + "tiens.shp";
-		smp2tga(source);
+		String source = "jps" + File.separator + "data" + File.separator + "auto.shp";
+		shp2tga(source);
 	}
 }

@@ -30,6 +30,11 @@ public class Value {
 		}
 	}
 
+	public Value(String keyword) {
+		this.type = ValueType.STRING;
+		this.value = keyword;
+	}
+	
 	private String applyInfo(Token op, Value v) {
 		return "(" + this + ", " + op + ", " + v + ")";
 	}
