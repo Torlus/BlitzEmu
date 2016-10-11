@@ -22,9 +22,11 @@ public class Preprocessor {
 		
 	
 	public void evalStatements(int level, Tokenizer tk) throws Exception {
-		// System.out.println("Entry " + level);
+		System.out.println("Entry " + level);
+		tk.dumpRemainingTokens("Entry", 5);
 		evalStatementsInt(level, tk);
-		// System.out.println("Exit  " + level);		
+		System.out.println("Exit  " + level);
+		tk.dumpRemainingTokens("Exit", 5);
 	}
 	
 	public void evalStatementsInt(int level, Tokenizer tk) throws Exception {
@@ -63,7 +65,6 @@ public class Preprocessor {
 				if (!tk.matchTokens(TokenType.WEND)) {
 					throw new Exception("'Wend' Expected " + tk.nextToken());
 				} 
-				tk.nextToken().truePosition = loopPosition;
 				tk.consumeToken();
 				tk.get(loopPosition).falsePosition = tk.position();
 			} else if (tk.matchTokens(TokenType.FOR, TokenType.IDENTIFIER, TokenType.EQ)) {
@@ -81,7 +82,6 @@ public class Preprocessor {
 				if (!tk.matchTokens(TokenType.NEXT)) {
 					throw new Exception("'Next' Expected");
 				}
-				tk.nextToken().truePosition = loopPosition; 
 				tk.consumeToken();
 				if (tk.matchTokens(TokenType.IDENTIFIER)) {
 					if (!loopIdentifier.equals(tk.nextToken().value)) {
@@ -101,30 +101,34 @@ public class Preprocessor {
 					evalInlineStatements(level + 1, tk);
 					if (tk.matchTokens(TokenType.ELSE)) {
 						int elsePosition = tk.position();
-						tk.get(ifPosition).falsePosition = elsePosition;
 						tk.consumeToken();
-						tk.get(elsePosition).truePosition = tk.position();
-						tk.get(elsePosition).inline = true;
+						tk.get(ifPosition).falsePosition = elsePosition;
 						evalInlineStatements(level + 1, tk);
+						if (tk.matchTokens(TokenType.EOL)) {
+							tk.consumeToken();
+						} else {
+							throw new Exception("Unexpected Token " + tk.nextToken());
+						}					
 						tk.get(elsePosition).falsePosition = tk.position();
+						tk.get(elsePosition).inline = true;
 					} else {
+						if (tk.matchTokens(TokenType.EOL)) {
+							tk.consumeToken();
+						} else {
+							throw new Exception("Unexpected Token " + tk.nextToken());
+						}
 						tk.get(ifPosition).falsePosition = tk.position();
 					}
-					if (tk.matchTokens(TokenType.EOL)) {
-						tk.consumeToken();
-					} else {
-						throw new Exception("Unexpected Token " + tk.nextToken());
-					}					
 					
 				} else {
 					tk.get(ifPosition).truePosition = tk.position();
-					tk.get(ifPosition).inline = true;					
+					tk.get(ifPosition).inline = false;					
 					evalStatements(level + 1, tk);
 					if (tk.matchTokens(TokenType.ELSE)) {
 						int elsePosition = tk.position();
 						tk.consumeToken();
-						tk.get(elsePosition).truePosition = tk.position();
-						tk.get(elsePosition).inline = true;						
+						tk.get(ifPosition).falsePosition = tk.position();
+						tk.get(elsePosition).inline = false;						
 						evalStatements(level + 1, tk);
 						tk.get(elsePosition).falsePosition = tk.position();						
 					} else {
@@ -187,9 +191,11 @@ public class Preprocessor {
 	}
 
 	public void evalInlineStatements(int level, Tokenizer tk) throws Exception {
-		// System.out.println("Entry " + level);
+		System.out.println("Inline Entry " + level);
+		tk.dumpRemainingTokens("Inline Entry", 5);
 		evalInlineStatementsInt(level, tk);
-		// System.out.println("Exit  " + level);				
+		System.out.println("Inline Exit  " + level);
+		tk.dumpRemainingTokens("Inline Exit", 5);
 	}
 
 	public void evalInlineStatementsInt(int level, Tokenizer tk) throws Exception {
@@ -211,21 +217,22 @@ public class Preprocessor {
 			}
 			
 			if (tk.matchTokens(TokenType.IF)) {
+				int ifPosition = tk.position();
 				tk.consumeToken();
 				evalCondition(tk);
 				if (tk.matchTokens(TokenType.THEN)) {
 					tk.consumeToken();
+				    tk.get(ifPosition).truePosition = tk.position();
+				    tk.get(ifPosition).inline = true;
 					evalInlineStatements(level + 1, tk);
 					if (tk.matchTokens(TokenType.ELSE)) {
+						int elsePosition = tk.position();
+						tk.get(ifPosition).falsePosition = elsePosition;
 						tk.consumeToken();
 						evalInlineStatements(level + 1, tk);					
+						tk.get(elsePosition).falsePosition = tk.position();
+						tk.get(elsePosition).inline = true;				
 					}
-					if (tk.matchTokens(TokenType.EOL)) {
-						tk.consumeToken();
-					} else {
-						throw new Exception("Unexpected Token " + tk.nextToken());
-					}					
-					
 				} else {
 					throw new Exception("'Then' Expected");
 				}

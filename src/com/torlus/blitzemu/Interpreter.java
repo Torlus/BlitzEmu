@@ -21,11 +21,13 @@ public class Interpreter {
 		throw new Exception("Unexpected EOF");
 	}
 	public void evalStatements(int level, Tokenizer tk) throws Exception {
-		// System.out.println("Entry " + level);
+		System.out.println("Entry " + level);
+		tk.dumpRemainingTokens("Entry", 5);
 		wb.enterScope();
 		evalStatementsInt(level, tk);
 		wb.exitScope();
-		// System.out.println("Exit  " + level);		
+		System.out.println("Exit  " + level);
+		tk.dumpRemainingTokens("Exit", 5);
 	}
 	
 	public void evalStatementsInt(int level, Tokenizer tk) throws Exception {
@@ -57,88 +59,83 @@ public class Interpreter {
 			}
 				
 			if (tk.matchTokens(TokenType.WHILE)) {
-				int loopPosition = tk.position();
+				Token branch = tk.nextToken();
 				tk.consumeToken();
-				evalCondition(level, tk);
+				if (!evalCondition(level, tk)) {
+					tk.seek(branch.falsePosition, "WHILE(false)");
+					continue;
+				}
 				evalStatements(level + 1, tk);
-				if (!tk.matchTokens(TokenType.WEND)) {
-					throw new Exception("'Wend' Expected " + tk.nextToken());
-				} 
-				tk.nextToken().truePosition = loopPosition;
 				tk.consumeToken();
-				tk.get(loopPosition).falsePosition = tk.position();
+				tk.seek(branch.position, "WHILE(true)");
 			} else if (tk.matchTokens(TokenType.FOR, TokenType.IDENTIFIER, TokenType.EQ)) {
-				int loopPosition = tk.position();
+				Token branch = tk.nextToken();
 				tk.consumeToken();
 				String loopIdentifier = tk.nextToken().value;
 				tk.consumeToken(2);
-				evalExpression(level, tk);
-				if (!tk.matchTokens(TokenType.TO)) {
-					throw new Exception("'To' Expected");
-				}
+				Value from = evalExpression(level, tk);
 				tk.consumeToken();
-				evalExpression(level, tk);
-				evalStatements(level + 1, tk);
-				if (!tk.matchTokens(TokenType.NEXT)) {
-					throw new Exception("'Next' Expected");
+				Value to = evalExpression(level, tk);
+				Value loopValue = wb.getVar(level, loopIdentifier);
+				if (loopValue == null) {
+					loopValue = new Value(from);
+				} else {
+					Token plus = new Token(TokenType.PLUS, 0);
+					Value step = new Value();
+					step.type = ValueType.INTEGER;
+					step.intValue = 1;
+					loopValue = loopValue.apply(plus, step);
 				}
-				tk.nextToken().truePosition = loopPosition; 
+				wb.setVar(level, loopIdentifier, loopValue);
+				Token le = new Token(TokenType.EQ, 0);
+				if (!loopValue.compare(le, to)) {
+					tk.seek(branch.falsePosition, "FOR(false)");
+					continue;
+				}
+				evalStatements(level + 1, tk);
 				tk.consumeToken();
 				if (tk.matchTokens(TokenType.IDENTIFIER)) {
-					if (!loopIdentifier.equals(tk.nextToken().value)) {
-						throw new Exception("Mismatched loop identifier");
-					}
 					tk.consumeToken();
 				}
-				tk.get(loopPosition).falsePosition = tk.position();
+				tk.seek(branch.position, "FOR(true)");
 			} else if (tk.matchTokens(TokenType.IF)) {
-				int ifPosition = tk.position();
+				Token ifBranch = tk.nextToken();
 				tk.consumeToken();
-				evalCondition(level, tk);
-				if (tk.matchTokens(TokenType.THEN)) {
-					tk.consumeToken();
-					tk.get(ifPosition).truePosition = tk.position();
-					tk.get(ifPosition).inline = true;
-					evalInlineStatements(level + 1, tk);
-					if (tk.matchTokens(TokenType.ELSE)) {
-						int elsePosition = tk.position();
-						tk.get(ifPosition).falsePosition = elsePosition;
-						tk.consumeToken();
-						tk.get(elsePosition).truePosition = tk.position();
-						tk.get(elsePosition).inline = true;
-						evalInlineStatements(level + 1, tk);
-						tk.get(elsePosition).falsePosition = tk.position();
-					} else {
-						tk.get(ifPosition).falsePosition = tk.position();
-					}
-					if (tk.matchTokens(TokenType.EOL)) {
-						tk.consumeToken();
-					} else {
-						throw new Exception("Unexpected Token " + tk.nextToken());
-					}					
-					
+								
+				boolean cond = evalCondition(level, tk);
+				if (!cond) {
+					tk.seek(ifBranch.falsePosition, "IF(cond=false)");
 				} else {
-					tk.get(ifPosition).truePosition = tk.position();
-					tk.get(ifPosition).inline = true;					
-					evalStatements(level + 1, tk);
-					if (tk.matchTokens(TokenType.ELSE)) {
-						int elsePosition = tk.position();
-						tk.consumeToken();
-						tk.get(elsePosition).truePosition = tk.position();
-						tk.get(elsePosition).inline = true;						
-						evalStatements(level + 1, tk);
-						tk.get(elsePosition).falsePosition = tk.position();						
-					} else {
-						tk.get(ifPosition).falsePosition = tk.position();
-					}
-					if (tk.matchTokens(TokenType.ENDIF)) {
-						tk.consumeToken();
-					} else if (tk.matchTokens(TokenType.END, TokenType.IF)) {
-						tk.consumeToken(2);
-					} else {
-						throw new Exception("Unexpected Token " + tk.nextToken());
-					}					
+					tk.seek(ifBranch.truePosition, "IF(cond=true)");
 				}
+				if (ifBranch.inline) {
+					evalInlineStatements(level + 1, tk);
+				} else {
+					evalStatements(level + 1, tk);
+				}
+				if (tk.matchTokens(TokenType.ELSE)) {
+					Token elseBranch = tk.nextToken();
+					tk.consumeToken();
+					if (cond) {
+						tk.seek(elseBranch.falsePosition, "ELSE(cond=true)");
+						
+					}
+					if (elseBranch.inline) {
+						evalInlineStatements(level + 1, tk);
+						// tk.dumpRemainingTokens();
+						tk.consumeToken(); // EOL while inline
+					} else {
+						evalStatements(level + 1, tk);
+					}
+				}
+				// tk.dumpRemainingTokens();
+				if (tk.matchTokens(TokenType.ENDIF)) {
+					tk.consumeToken();
+				} else if (tk.matchTokens(TokenType.END, TokenType.IF)) {
+					tk.consumeToken(2);
+				} else {
+					throw new Exception("Unexpected Token " + tk.nextToken());
+				}					
 			} else if (tk.matchTokens(TokenType.IDENTIFIER, TokenType.EQ)) {
 				// Assignments
 				String name = tk.nextToken().value;
@@ -157,24 +154,20 @@ public class Interpreter {
 		}
 	}
 	
-	public void evalCondition(int level, Tokenizer tk) throws Exception {
+	public boolean evalCondition(int level, Tokenizer tk) throws Exception {
+		boolean res = false;
 		if (tk.matchTokens(TokenType.LPAREN)) {
 			tk.consumeToken();
-			evalCondition(level, tk);
-			if (tk.matchTokens(TokenType.RPAREN)) {
-				tk.consumeToken();
-			} else {
-				throw new Exception("')' Expected");
-			}
+			res = evalCondition(level, tk);
+			tk.consumeToken();
 		} else {
-			evalExpression(level, tk);
-			if (tk.nextToken().isComparison()) {
-				tk.consumeToken();
-			} else {
-				throw new Exception("Comparison Expected " + tk.nextToken());
-			}
-			evalExpression(level, tk);
+			Value a = evalExpression(level, tk);
+			Token op = tk.nextToken();
+			tk.consumeToken();
+			Value b = evalExpression(level, tk);
+			res = a.compare(op, b);
 		}
+		return res;
 	}
 	
 	public Vector<Value> evalParameters(int level, Tokenizer tk) throws Exception {
@@ -192,11 +185,13 @@ public class Interpreter {
 	}
 
 	public void evalInlineStatements(int level, Tokenizer tk) throws Exception {
-		// System.out.println("Entry " + level);
+		System.out.println("Inline Entry " + level);
+		tk.dumpRemainingTokens("Entry", 5);
 		wb.enterScope();
 		evalInlineStatementsInt(level, tk);
 		wb.exitScope();
-		// System.out.println("Exit  " + level);				
+		System.out.println("Inline Exit  " + level);
+		tk.dumpRemainingTokens("Exit", 5);
 	}
 
 	public void evalInlineStatementsInt(int level, Tokenizer tk) throws Exception {
@@ -218,24 +213,32 @@ public class Interpreter {
 			}
 			
 			if (tk.matchTokens(TokenType.IF)) {
+				Token ifBranch = tk.nextToken();
 				tk.consumeToken();
-				evalCondition(level, tk);
-				if (tk.matchTokens(TokenType.THEN)) {
-					tk.consumeToken();
+								
+				boolean cond = evalCondition(level, tk); 
+				if (!cond) {
+					tk.seek(ifBranch.falsePosition, "inline IF(cond=false)");
 					evalInlineStatements(level + 1, tk);
-					if (tk.matchTokens(TokenType.ELSE)) {
-						tk.consumeToken();
-						evalInlineStatements(level + 1, tk);					
-					}
-					if (tk.matchTokens(TokenType.EOL)) {
-						tk.consumeToken();
-					} else {
-						throw new Exception("Unexpected Token " + tk.nextToken());
-					}					
-					
 				} else {
-					throw new Exception("'Then' Expected");
+					tk.seek(ifBranch.truePosition, "inline IF(cond=true)");
+					evalInlineStatements(level + 1, tk);
 				}
+				tk.consumeToken();
+				if (tk.matchTokens(TokenType.ELSE)) {
+					Token elseBranch = tk.nextToken();
+					tk.consumeToken();
+					if (cond) {
+						tk.seek(elseBranch.falsePosition,"inline ELSE(cond=true)");
+					}
+					evalInlineStatements(level + 1, tk);
+					tk.consumeToken(); // EOL while inline
+				}
+				if (tk.matchTokens(TokenType.EOL)) {
+					tk.consumeToken();
+				} else {
+					throw new Exception("Unexpected Token " + tk.nextToken());
+				}							
 			} else if (tk.matchTokens(TokenType.IDENTIFIER, TokenType.EQ)) {
 				// Assignments
 				String name = tk.nextToken().value;
@@ -317,7 +320,15 @@ public class Interpreter {
 				Value value = wb.getVar(level, name);
 				if (value == null) {
 					// throw new Exception("Undefined Variable " + name);
-					value = new Value(name);
+					// value = new Value(name);
+					value = new Value();
+					value.type = ValueType.INTEGER;
+					value.intValue = 0;
+					if (level > 0) {
+						wb.setVar(level - 1, name, value);
+					} else {
+						wb.setVar(0, name, value);
+					}
 				}
 				return value;
 			} else {

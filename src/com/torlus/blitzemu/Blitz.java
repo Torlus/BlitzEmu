@@ -38,14 +38,14 @@ public class Blitz extends BasicGame{
 	
 			FileInputStream in = null;
 			try {
-				in = new FileInputStream("jps" + File.separator + "src_overtaking.txt");
-				// in = new FileInputStream("test_suite.txt");
+				// in = new FileInputStream("jps" + File.separator + "src_overtaking.txt");
+				in = new FileInputStream("test_suite.txt");
 				tk.tokenize(in);
 			} catch (Exception ex) {
 				ex.printStackTrace();
 				return;
 			}
-			// tk.dumpTokens();
+			tk.dumpTokens();
 	
 			Preprocessor pp = new Preprocessor(wb);
 			System.out.println("*** Preprocessor");
@@ -64,7 +64,7 @@ public class Blitz extends BasicGame{
 				it.eval(tk);
 			} catch (Exception ex) {
 				ex.printStackTrace();
-				// tk.dumpRemainingTokens();
+				// tk.dumpRemainingTokens("MAIN ", 0);
 				return;
 			}
 			

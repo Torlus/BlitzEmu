@@ -163,9 +163,6 @@ public class Workbench {
 			for(int n = 0; n < params.size(); n++) {
 				Value arg = params.get(n);
 				switch(arg.type) {
-				case BOOLEAN:
-					line += (arg.boolValue ? "True" : "False");
-					break;
 				case FLOAT:
 					line += arg.floatValue;
 					break;
@@ -292,7 +289,6 @@ public class Workbench {
 			int index = params.remove(0).intValue;
 			currentModule = index;
 			modules.get(index).playAsMusic(1.0f, 1.0f, true);
-			Thread.sleep(20000);
 		} else if ("StopModule".equals(name)) {
 			if (currentModule >= 0) {
 				modules.get(currentModule).stop();

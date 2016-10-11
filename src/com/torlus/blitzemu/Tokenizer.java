@@ -41,8 +41,10 @@ public class Tokenizer {
 	public int position() {
 		return position;
 	}
-	public void seek(int position) {
+	public void seek(int position, String reason) {
 		this.position = position;
+		System.out.println("Branching to " + nextToken() + " cause:" + reason);
+		// try { Thread.sleep(1000); } catch(Exception ex) {}
 	}
 	public Token get(int index) {
 		return tokens.get(index);
@@ -202,10 +204,12 @@ public class Tokenizer {
 		}
 	}
 	
-	public void dumpRemainingTokens() {
+	public void dumpRemainingTokens(String prefix, int limit) {
 		for(int k = position; k < tokens.size(); k++) {
-			System.out.println(tokens.get(k));
-		}
+			System.out.println(prefix + " " + tokens.get(k));
+			if (limit > 0 && k == position + limit)
+				break;
+		}		
 	}
-		
+			
 }

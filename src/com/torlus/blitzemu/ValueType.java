@@ -5,6 +5,5 @@ public enum ValueType {
 	
 	STRING,
 	INTEGER,
-	FLOAT,
-	BOOLEAN
+	FLOAT
 }
