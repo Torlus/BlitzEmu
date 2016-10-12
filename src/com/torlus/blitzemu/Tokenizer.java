@@ -8,7 +8,7 @@ public class Tokenizer {
 	private Vector<Token> tokens = new Vector<Token>();
 	private int position = 0;
 	private int mark = 0;
-	private boolean debug = false;
+	public static boolean debug = false;
 	
 	public Token nextToken(int offset) {
 		int p = position + offset;
@@ -208,9 +208,9 @@ public class Tokenizer {
 	
 	public void dumpRemainingTokens(String prefix, int limit) {
 		for(int k = position; k < tokens.size(); k++) {
-			System.out.println(prefix + " " + tokens.get(k));
-			if (limit > 0 && k == position + limit)
+			if (limit >= 0 && k == position + limit)
 				break;
+			System.out.println(prefix + " " + tokens.get(k));
 		}		
 	}
 			

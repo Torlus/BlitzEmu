@@ -4,7 +4,8 @@ import java.util.Vector;
 
 public class Interpreter {
 	private Workbench wb;
-	private boolean debug = false;
+	public static boolean debug = false;
+	public static int debugTokens = 0;
 	
 	public Interpreter(Workbench wb) {
 		this.wb = wb;
@@ -24,14 +25,14 @@ public class Interpreter {
 	public void evalStatements(int level, Tokenizer tk) throws Exception {
 		if (debug) {
 			System.out.println("Entry " + level);
-			tk.dumpRemainingTokens("Entry", 5);
+			tk.dumpRemainingTokens("Entry", debugTokens);
 		}
 		wb.enterScope();
 		evalStatementsInt(level, tk);
 		wb.exitScope();
 		if (debug) {
 			System.out.println("Exit  " + level);
-			tk.dumpRemainingTokens("Exit", 5);
+			tk.dumpRemainingTokens("Exit", debugTokens);
 		}
 	}
 	
@@ -192,14 +193,14 @@ public class Interpreter {
 	public void evalInlineStatements(int level, Tokenizer tk) throws Exception {
 		if (debug) {
 			System.out.println("Inline Entry " + level);
-			tk.dumpRemainingTokens("Entry", 5);
+			tk.dumpRemainingTokens("Entry", debugTokens);
 		}
 		wb.enterScope();
 		evalInlineStatementsInt(level, tk);
 		wb.exitScope();
 		if (debug) {
 			System.out.println("Inline Exit  " + level);
-			tk.dumpRemainingTokens("Exit", 5);
+			tk.dumpRemainingTokens("Exit", debugTokens);
 		}
 	}
 
@@ -288,7 +289,7 @@ public class Interpreter {
 			if (tk.nextToken().isFactorOperation()) {
 				Token op = tk.nextToken();
 				tk.consumeToken();
-				return value.apply(op, evalFactor(level, tk));
+				return value.apply(op, evalExpression(level, tk));
 			} else {
 				return value;
 			}

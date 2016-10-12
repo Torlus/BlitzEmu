@@ -1,3 +1,29 @@
+vy=230
+vx=150
+px=100
+py=100
+exit=0
+While exit=0
+  Print "A) ex=",ex," i=",i, " px=",px
+  ; dest. enemi X
+  If i=0
+    Print "i ZERO"
+    ex=Rnd(103)
+    ex=85+ex
+    ex=Int(ex)
+    i=1
+  Else
+    Print "i UN"
+    If ex>px
+       px=px+1
+    Else
+       If ex=px Then i=0 Else px=px-1
+    EndIf
+  End If
+  ; dest. enemi Y
+  Print "B) ex=",ex," i=",i, " px=",px
+Wend
+
 ;a=3*4.1 + 2
 ;Print a
 
@@ -32,17 +58,17 @@
 ;Wend
 ;i=0
 
-vit=2
-vx=100
-vy=200
-If Joyr(1)=0 Then vy=vy-vit             ; Haut
-If Joyr(1)=1 Then vx=vx+vit : vy=vy-vit ; Haut+Droite
-If Joyr(1)=2 Then vx=vx+vit             ; Droite
-If Joyr(1)=3 Then vx=vx+vit : vy=vy+vit ; Bas+Droite
-If Joyr(1)=4 Then vy=vy+2             ; Bas
-If Joyr(1)=5 Then vy=vy+vit : vx=vx-vit ; Bas+Gauche
-If Joyr(1)=-1 Then vx=vx-vit             ; Gauche
-If Joyr(1)=7 Then vx=vx-vit : vy=vy-vit ; gauche+haut
-fin=3
+;vit=2
+;vx=100
+;vy=200
+;If Joyr(1)=0 Then vy=vy-vit             ; Haut
+;If Joyr(1)=1 Then vx=vx+vit : vy=vy-vit ; Haut+Droite
+;If Joyr(1)=2 Then vx=vx+vit             ; Droite
+;If Joyr(1)=3 Then vx=vx+vit : vy=vy+vit ; Bas+Droite
+;If Joyr(1)=4 Then vy=vy+2             ; Bas
+;If Joyr(1)=5 Then vy=vy+vit : vx=vx-vit ; Bas+Gauche
+;If Joyr(1)=-1 Then vx=vx-vit             ; Gauche
+;If Joyr(1)=7 Then vx=vx-vit : vy=vy-vit ; gauche+haut
+;fin=3
 
 End

@@ -162,7 +162,7 @@ public class Value {
 				res.floatValue -= v.intValue;
 				break;
 			case FLOAT:
-				res.floatValue += v.floatValue;
+				res.floatValue -= v.floatValue;
 				break;
 			default:
 				error(op, v);

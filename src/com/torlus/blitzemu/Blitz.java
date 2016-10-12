@@ -39,7 +39,7 @@ public class Blitz extends BasicGame {
 	
 			FileInputStream in = null;
 			try {
-				in = new FileInputStream("jps" + File.separator + "src_overtaking.txt");
+				in = new FileInputStream("jps" + File.separator + "src_overtaking_fast.txt");
 				// in = new FileInputStream("test_suite.txt");
 				tk.tokenize(in);
 			} catch (Exception ex) {
@@ -115,7 +115,8 @@ public class Blitz extends BasicGame {
 				g.drawImage(bg.image, 0, 0, (bg.width) * 2 - 1, (bg.height) * 2 - 1, 
 						bg.x, bg.y, bg.x + bg.width - 1, bg.y + bg.height - 1);
 			} else {
-
+				g.drawImage(bg.image, 0, 0, bg.width - 1, bg.height - 1, 
+						bg.x, bg.y, bg.x + bg.width - 1, bg.y + bg.height - 1);
 			}
 			Buffer buf = wb.getBuffer(index);
 			if (buf != null) {

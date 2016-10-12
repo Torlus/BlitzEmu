@@ -13,9 +13,10 @@ import org.newdawn.slick.tests.SoundURLTest;
 import com.tinyline.svg.ImageLoader;
 
 public class Workbench {
-	
+	public static boolean debug = false;
 	private String assetsPath;
-	private Vector<TreeMap<String, Value>> variables = new Vector<>();
+	// private Vector<TreeMap<String, Value>> variables = new Vector<>();
+	private TreeMap<String, Value> variables = new TreeMap<>(); 
 
 	private TreeMap<Integer, Audio> sounds = new TreeMap<>();
 	private TreeMap<Integer, Audio> modules = new TreeMap<>();
@@ -125,17 +126,19 @@ public class Workbench {
 	// Variable scope management
 	
 	public void enterScope() {
-		variables.add(new TreeMap<String, Value>());
+		//variables.add(new TreeMap<String, Value>());
 	}
 	public void exitScope() {
-		variables.remove(variables.size() - 1);
+		//variables.remove(variables.size() - 1);
 	}
 	
 	public void setVar(int level, String name, Value value) {
-		TreeMap<String, Value> scope = null;
+		/*TreeMap<String, Value> scope = null;
+		int l = level;
 		for(int n = level; n >= 0; n--) {
 			scope = variables.get(n);
 			if (scope.get(name) != null) {
+				l = n;
 				break;
 			}
 			scope = null;
@@ -143,20 +146,34 @@ public class Workbench {
 		if (scope == null) {
 			scope = variables.get(level);
 		}
-		scope.put(name, value);
+		if (debug) {
+			System.out.println("Write @" + level + " (actual @" + l + ") " + name + "=" + value);
+		}
+		scope.put(name, value);*/
+		if (debug)
+			System.out.println("Write " + name + "=" + value);
+		variables.put(name, value);
 	}
 	
 	public Value getVar(int level, String name) {
-		TreeMap<String, Value> scope = null;
+		/*TreeMap<String, Value> scope = null;
 		Value value = null;
 		for(int n = level; n >= 0; n--) {
 			scope = variables.get(n);
 			value = scope.get(name); 
 			if (value != null) {
+				if (debug) {
+					System.out.println("Read  @" + level + " (actual @" + n + ") " + name + "=" + value);
+				}
 				return value;
 			}
 		}
 		return null;
+		*/
+		Value value = variables.get(name);
+		if (debug)
+			System.out.println("Read  " + name + "=" + value);
+		return value;
 	}
 	
 	public Value evalFunction(String name, Vector<Value> params) throws Exception {
@@ -369,6 +386,13 @@ public class Workbench {
 			blit.x = x;
 			blit.y = y;
 			buffers.get(buf).blits.add(blit);
+		} else if ("Trace".equals(name)) {
+			int tokens = params.remove(0).intValue;
+			boolean on = tokens != 0;
+			Tokenizer.debug = on;
+			Interpreter.debug = on;
+			Interpreter.debugTokens = tokens;
+			Workbench.debug = on;
 		} else if ("BLITZ".equals(name)) {	
 		} else if ("QAMIGA".equals(name)) {	
 		} else if ("Mouse".equals(name)) {

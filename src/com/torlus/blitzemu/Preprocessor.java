@@ -123,19 +123,18 @@ public class Preprocessor {
 					tk.get(ifPosition).truePosition = tk.position();
 					tk.get(ifPosition).inline = false;			
 					evalStatements(level + 1, tk);
+					tk.get(ifPosition).falsePosition = tk.position();					
 					if (tk.matchTokens(TokenType.ELSE)) {
 						int elsePosition = tk.position();
 						tk.consumeToken();
-						tk.get(ifPosition).falsePosition = elsePosition;
+						// tk.get(ifPosition).falsePosition = elsePosition;
 						evalStatements(level + 1, tk);
 						tk.get(elsePosition).inline = false;
 						tk.get(elsePosition).falsePosition = tk.position();						
 					} 
 					if (tk.matchTokens(TokenType.ENDIF)) {
-						tk.get(ifPosition).falsePosition = tk.position();
 						tk.consumeToken();
 					} else if (tk.matchTokens(TokenType.END, TokenType.IF)) {
-						tk.get(ifPosition).falsePosition = tk.position();
 						tk.consumeToken(2);
 					} else {
 						throw new Exception("Unexpected Token " + tk.nextToken());
