@@ -1,6 +1,7 @@
 package com.torlus.blitzemu;
 
 import java.io.File;
+import java.util.Random;
 import java.util.TreeMap;
 import java.util.Vector;
 
@@ -19,6 +20,16 @@ public class Workbench {
 	private TreeMap<Integer, Audio> sounds = new TreeMap<>();
 	private TreeMap<Integer, Audio> modules = new TreeMap<>();
 	
+	private int joyb = 0, joyr = -1;
+	public void updateInput(int joyb, int joyr) {
+		synchronized(uiTasks) {
+			this.joyb = joyb;
+			this.joyr = joyr;
+		}
+	}
+	
+	private static Random random = new Random();
+	
 	public static class Bitmap {
 		public Image image;
 		public int bpp;
@@ -28,10 +39,10 @@ public class Workbench {
 	}
 	private TreeMap<Integer, Bitmap> bitmaps = new TreeMap<>();
 	
-	public static class Shapes {
-		public Vector<Image> images = new Vector<>();
+	public static class Shape {
+		public Image image;
 	}
-	private TreeMap<Integer, Shapes> shapes = new TreeMap<>(); 
+	private TreeMap<Integer, Shape> shapes = new TreeMap<>(); 
 
 	public static class BBlit {
 		public Image image;
@@ -68,7 +79,7 @@ public class Workbench {
 	public Buffer getBuffer(int index) {
 		return buffers.get(index);
 	}
-	public Shapes getShapes(int index) {
+	public Shape getShapes(int index) {
 		return shapes.get(index);
 	}
 	
@@ -149,12 +160,55 @@ public class Workbench {
 	public Value evalFunction(String name, Vector<Value> params) throws Exception {
 		Value v = new Value();
 		if ("Joyb".equals(name)) {
+			int index = params.remove(0).intValue;
 			v.type = ValueType.INTEGER;
 			v.intValue = 0;
-			return v;
+			if (index == 1) {
+				v.intValue = joyb;
+			}
+		} else if ("Joyr".equals(name)) {
+			int index = params.remove(0).intValue;
+			v.type = ValueType.INTEGER;
+			v.intValue = -1;
+			if (index == 1) {
+				v.intValue = joyr;
+			}
+		} else if ("Rnd".equals(name)) {
+			v.type = ValueType.FLOAT;
+			Value p = params.remove(0);
+			if (p.type == ValueType.INTEGER) {
+				v.floatValue = p.intValue;
+			} else {
+				v.floatValue = p.floatValue;
+			}
+			v.floatValue *= random.nextFloat();
+		} else if ("Int".equals(name)) {
+			v.type = ValueType.INTEGER;
+			Value p = params.remove(0);
+			if (p.type == ValueType.INTEGER) {
+				v.intValue = p.intValue;
+			} else {
+				v.intValue = Math.round(p.floatValue);
+			}
+		} else if ("QWrap".equals(name)) {
+			int value = params.remove(0).intValue;
+			int min = params.remove(0).intValue;
+			int max = params.remove(0).intValue;
+			v.type = ValueType.INTEGER;
+			v.intValue = value;
+			if (v.intValue < min) {
+				v.intValue = v.intValue + max - min;
+			} else if (v.intValue > max) {
+				v.intValue = v.intValue - max + min;
+			}
+		} else if ("ShapesHit".equals(name)) {
+			v.type = ValueType.INTEGER;
+			v.intValue = 0;
+			// TODO
 		} else {
 			throw new Exception("Unknown Function " + name);
 		}
+		return v;
 	}
 
 	public void evalCommand(String name, Vector<Value> params) throws Exception {
@@ -231,14 +285,14 @@ public class Workbench {
 				@Override
 				public void run() { 
 					try {
-						Shapes shp = shapes.get(index);
-						if (shp == null) {
-							shp = new Shapes();
-							shapes.put(index, shp);
-						}
 						for(int i = 0; i < n; i++) {
+							Shape shp = shapes.get(index + i);
+							if (shp == null) {
+								shp = new Shape();
+								shapes.put(index + i, shp);
+							}
 							Image img = new Image(source + "." + i + ".tga");
-							shp.images.add(img);	
+							shp.image = img;
 						}
 					} catch(Exception ex) {
 						ex.printStackTrace();
@@ -266,6 +320,7 @@ public class Workbench {
 			slices.put(index, slice);
 		} else if ("Show".equals(name)) {
 			int index = params.remove(0).intValue;
+			System.out.println("Show " + index);
 			int x = (params.size() > 0 ? params.remove(0).intValue : 0);
 			int y = (params.size() > 0 ? params.remove(0).intValue : 0);
 			runOnUIThread( new Runnable() {
@@ -297,7 +352,21 @@ public class Workbench {
 		} else if ("Sound".equals(name)) {
 			int index = params.remove(0).intValue;
 			sounds.get(index).playAsSoundEffect(1.0f, 1.0f, false);
+		} else if ("UnBuffer".equals(name)) {
+			int index = params.remove(0).intValue;
+			buffers.get(index).blits.clear();
+		} else if ("BBlit".equals(name)) {
+			int buf = params.remove(0).intValue;
+			int shp = params.remove(0).intValue;
+			int x = params.remove(0).intValue;
+			int y = params.remove(0).intValue;
+			BBlit blit = new BBlit();
+			blit.image = shapes.get(shp).image;
+			blit.x = x;
+			blit.y = y;
+			buffers.get(buf).blits.add(blit);
 		} else if ("BLITZ".equals(name)) {	
+		} else if ("QAMIGA".equals(name)) {	
 		} else if ("Mouse".equals(name)) {
 		} else if ("Use".equals(name)) {			
 		} else {

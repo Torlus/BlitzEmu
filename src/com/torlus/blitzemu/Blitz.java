@@ -8,6 +8,7 @@ import org.newdawn.slick.BasicGame;
 import org.newdawn.slick.GameContainer;
 import org.newdawn.slick.Graphics;
 import org.newdawn.slick.Image;
+import org.newdawn.slick.Input;
 import org.newdawn.slick.SlickException;
 import org.newdawn.slick.openal.SoundStore;
 
@@ -15,7 +16,7 @@ import com.torlus.blitzemu.Workbench.BBlit;
 import com.torlus.blitzemu.Workbench.Bitmap;
 import com.torlus.blitzemu.Workbench.Buffer;
 
-public class Blitz extends BasicGame{
+public class Blitz extends BasicGame {
 
 	private boolean startStop[] = new boolean[2];
 	private GameContainer gc;
@@ -120,7 +121,13 @@ public class Blitz extends BasicGame{
 			Buffer buf = wb.getBuffer(0);
 			if (buf != null) {
 				for( BBlit bl : buf.blits ) {
-					g.drawImage(bl.image, bl.x, bl.y);
+					if (bg.bpp == 4) {
+						g.drawImage(bl.image, bl.x * 2, bl.y * 2, (bl.x + bl.image.getWidth()) * 2 - 1, (bl.y + bl.image.getHeight()) * 2 - 1, 
+								0, 0, bl.image.getWidth() - 1, bl.image.getHeight() - 1);
+					} else {
+						g.drawImage(bl.image, bl.x, bl.y * 2, bl.x + bl.image.getWidth() - 1, (bl.y + bl.image.getHeight()) * 2 - 1, 
+								0, 0, bl.image.getWidth() - 1, bl.image.getHeight() - 1);
+					}
 				}
 			}
 		}
@@ -140,6 +147,36 @@ public class Blitz extends BasicGame{
 				break;
 			}
 		}
+		
+		Input input = gc.getInput();
+		int joyr = -1;
+		if (input.isKeyDown(Input.KEY_UP)) {
+			if (input.isKeyDown(Input.KEY_LEFT)) {
+				joyr = 7;
+			} else if (input.isKeyDown(Input.KEY_RIGHT)) {
+				joyr = 1;
+			} else {
+				joyr = 0;
+			}
+		} else if (input.isKeyDown(Input.KEY_DOWN)) {
+			if (input.isKeyDown(Input.KEY_LEFT)) {
+				joyr = 5;
+			} else if (input.isKeyDown(Input.KEY_RIGHT)) {
+				joyr = 3;
+			} else {
+				joyr = 4;
+			}			
+		} else if (input.isKeyDown(Input.KEY_LEFT)) {
+			joyr = 6;
+		} else if (input.isKeyDown(Input.KEY_RIGHT)) {
+			joyr = 2;
+		}
+		int joyb = 0;
+		if (input.isKeyDown(Input.KEY_SPACE)) {
+			joyb = 1;
+		}
+		wb.updateInput(joyb, joyr);
+		
 		synchronized(startStop) {
 			if (startStop[1])
 				gc.exit();

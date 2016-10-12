@@ -108,7 +108,7 @@ public class Preprocessor {
 							tk.consumeToken();
 						} else {
 							throw new Exception("Unexpected Token " + tk.nextToken());
-						}					
+						}
 						tk.get(elsePosition).falsePosition = tk.position();
 						tk.get(elsePosition).inline = true;
 					} else {
@@ -119,24 +119,23 @@ public class Preprocessor {
 						}
 						tk.get(ifPosition).falsePosition = tk.position();
 					}
-					
 				} else {
 					tk.get(ifPosition).truePosition = tk.position();
-					tk.get(ifPosition).inline = false;					
+					tk.get(ifPosition).inline = false;			
 					evalStatements(level + 1, tk);
 					if (tk.matchTokens(TokenType.ELSE)) {
 						int elsePosition = tk.position();
 						tk.consumeToken();
-						tk.get(ifPosition).falsePosition = tk.position();
-						tk.get(elsePosition).inline = false;						
+						tk.get(ifPosition).falsePosition = elsePosition;
 						evalStatements(level + 1, tk);
+						tk.get(elsePosition).inline = false;
 						tk.get(elsePosition).falsePosition = tk.position();						
-					} else {
-						tk.get(ifPosition).falsePosition = tk.position();
-					}
+					} 
 					if (tk.matchTokens(TokenType.ENDIF)) {
+						tk.get(ifPosition).falsePosition = tk.position();
 						tk.consumeToken();
 					} else if (tk.matchTokens(TokenType.END, TokenType.IF)) {
+						tk.get(ifPosition).falsePosition = tk.position();
 						tk.consumeToken(2);
 					} else {
 						throw new Exception("Unexpected Token " + tk.nextToken());
@@ -227,8 +226,8 @@ public class Preprocessor {
 					evalInlineStatements(level + 1, tk);
 					if (tk.matchTokens(TokenType.ELSE)) {
 						int elsePosition = tk.position();
-						tk.get(ifPosition).falsePosition = elsePosition;
 						tk.consumeToken();
+						tk.get(ifPosition).falsePosition = tk.position();
 						evalInlineStatements(level + 1, tk);					
 						tk.get(elsePosition).falsePosition = tk.position();
 						tk.get(elsePosition).inline = true;				

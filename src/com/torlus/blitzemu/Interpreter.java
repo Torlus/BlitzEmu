@@ -110,38 +110,36 @@ public class Interpreter {
 				boolean cond = evalCondition(level, tk);
 				if (!cond) {
 					tk.seek(ifBranch.falsePosition, "IF(cond=false)");
+					// evalStatements(level + 1, tk);
 				} else {
 					tk.seek(ifBranch.truePosition, "IF(cond=true)");
-				}
-				if (ifBranch.inline) {
-					evalInlineStatements(level + 1, tk);
-				} else {
-					evalStatements(level + 1, tk);
+					if (!ifBranch.inline) {
+						evalStatements(level + 1, tk);						
+					} else {
+						evalInlineStatements(level + 1, tk);								
+					}
 				}
 				if (tk.matchTokens(TokenType.ELSE)) {
 					Token elseBranch = tk.nextToken();
 					tk.consumeToken();
 					if (cond) {
 						tk.seek(elseBranch.falsePosition, "ELSE(cond=true)");
-					}
-					if (elseBranch.inline) {
-						evalInlineStatements(level + 1, tk);
-						// tk.dumpRemainingTokens();
-						tk.consumeToken(); // EOL while inline
 					} else {
-						evalStatements(level + 1, tk);
+						if (!elseBranch.inline) {
+							evalStatements(level + 1, tk);						
+						} else {
+							evalInlineStatements(level + 1, tk);								
+						}
 					}
-				} else {
-					continue;
 				}
-				// tk.dumpRemainingTokens();
+				if (ifBranch.inline)
+					continue;
 				if (tk.matchTokens(TokenType.ENDIF)) {
 					tk.consumeToken();
 				} else if (tk.matchTokens(TokenType.END, TokenType.IF)) {
 					tk.consumeToken(2);
 				} else {
-					// throw new Exception("Unexpected Token " + tk.nextToken());
-					continue;
+					throw new Exception("Unexpected Token " + tk.nextToken());
 				}					
 			} else if (tk.matchTokens(TokenType.IDENTIFIER, TokenType.EQ)) {
 				// Assignments
@@ -227,7 +225,8 @@ public class Interpreter {
 				Token ifBranch = tk.nextToken();
 				tk.consumeToken();
 								
-				boolean cond = evalCondition(level, tk); 
+				boolean cond = evalCondition(level, tk);
+				tk.consumeToken(); // THEN
 				if (!cond) {
 					tk.seek(ifBranch.falsePosition, "inline IF(cond=false)");
 					evalInlineStatements(level + 1, tk);
@@ -235,22 +234,16 @@ public class Interpreter {
 					tk.seek(ifBranch.truePosition, "inline IF(cond=true)");
 					evalInlineStatements(level + 1, tk);
 				}
-				tk.consumeToken();
+
 				if (tk.matchTokens(TokenType.ELSE)) {
 					Token elseBranch = tk.nextToken();
 					tk.consumeToken();
 					if (cond) {
 						tk.seek(elseBranch.falsePosition,"inline ELSE(cond=true)");
+					} else {
+						evalInlineStatements(level + 1, tk);						
 					}
-					evalInlineStatements(level + 1, tk);
-					tk.consumeToken(); // EOL while inline
-				} 
-				if (tk.matchTokens(TokenType.EOL)) {
-					tk.consumeToken();
-				} else {
-					// throw new Exception("Unexpected Token " + tk.nextToken());
-					continue;
-				}							
+				}
 			} else if (tk.matchTokens(TokenType.IDENTIFIER, TokenType.EQ)) {
 				// Assignments
 				String name = tk.nextToken().value;
