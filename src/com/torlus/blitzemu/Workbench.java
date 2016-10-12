@@ -34,6 +34,8 @@ public class Workbench {
 		public Image image;
 		public int bpp;
 		public int size;
+		public int width;
+		public int height;
 		public int x;
 		public int y;
 	}
@@ -256,6 +258,8 @@ public class Workbench {
 						Bitmap ie = new Bitmap();
 						ie.image = new Image(width, height);
 						ie.bpp = bpp;
+						ie.width = width;
+						ie.height = height;
 						bitmaps.put(index, ie);
 					} catch(Exception ex) {
 						ex.printStackTrace();
@@ -320,7 +324,7 @@ public class Workbench {
 			slices.put(index, slice);
 		} else if ("Show".equals(name)) {
 			int index = params.remove(0).intValue;
-			System.out.println("Show " + index);
+			// System.out.println("Show " + index);
 			int x = (params.size() > 0 ? params.remove(0).intValue : 0);
 			int y = (params.size() > 0 ? params.remove(0).intValue : 0);
 			runOnUIThread( new Runnable() {

@@ -112,21 +112,19 @@ public class Blitz extends BasicGame {
 		if (index >= 0) {
 			Bitmap bg = wb.getBitmap(index);
 			if (bg.bpp == 4) {
-				g.drawImage(bg.image, bg.x * 2, bg.y * 2, (bg.x + bg.image.getWidth()) * 2 - 1, (bg.y + bg.image.getHeight()) * 2 - 1, 
-						0, 0, bg.image.getWidth() - 1, bg.image.getHeight() - 1);
+				g.drawImage(bg.image, 0, 0, (bg.width) * 2 - 1, (bg.height) * 2 - 1, 
+						bg.x, bg.y, bg.x + bg.width - 1, bg.y + bg.height - 1);
 			} else {
-				g.drawImage(bg.image, bg.x, bg.y * 2, bg.x + bg.image.getWidth() - 1, (bg.y + bg.image.getHeight()) * 2 - 1, 
-						0, 0, bg.image.getWidth() - 1, bg.image.getHeight() - 1);
+
 			}
-			Buffer buf = wb.getBuffer(0);
+			Buffer buf = wb.getBuffer(index);
 			if (buf != null) {
 				for( BBlit bl : buf.blits ) {
 					if (bg.bpp == 4) {
-						g.drawImage(bl.image, bl.x * 2, bl.y * 2, (bl.x + bl.image.getWidth()) * 2 - 1, (bl.y + bl.image.getHeight()) * 2 - 1, 
+						g.drawImage(bl.image, (bl.x - bg.x) * 2, (bl.y - bg.y) * 2, (bl.x - bg.x + bl.image.getWidth()) * 2 - 1, (bl.y - bg.y + bl.image.getHeight()) * 2 - 1, 
 								0, 0, bl.image.getWidth() - 1, bl.image.getHeight() - 1);
 					} else {
-						g.drawImage(bl.image, bl.x, bl.y * 2, bl.x + bl.image.getWidth() - 1, (bl.y + bl.image.getHeight()) * 2 - 1, 
-								0, 0, bl.image.getWidth() - 1, bl.image.getHeight() - 1);
+
 					}
 				}
 			}
