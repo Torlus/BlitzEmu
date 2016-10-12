@@ -102,7 +102,7 @@ public class Workbench {
 			if (vCount > 0) {
 				vCount--;
 				if (vCount == 0) {
-					System.out.println("vbl() vCount=" + vCount); 
+					// System.out.println("vbl() vCount=" + vCount); 
 					uiTasks.notifyAll();
 				}
 			}
@@ -281,7 +281,7 @@ public class Workbench {
 			if (count > 0) {
 				synchronized(uiTasks) {
 					vCount = count;
-					System.out.println("vWait() vCount=" + vCount); 
+					// System.out.println("vWait() vCount=" + vCount); 
 					uiTasks.wait();
 				}
 			}

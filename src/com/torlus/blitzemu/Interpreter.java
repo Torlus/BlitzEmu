@@ -4,7 +4,8 @@ import java.util.Vector;
 
 public class Interpreter {
 	private Workbench wb;
-
+	private boolean debug = false;
+	
 	public Interpreter(Workbench wb) {
 		this.wb = wb;
 	}
@@ -21,13 +22,17 @@ public class Interpreter {
 		throw new Exception("Unexpected EOF");
 	}
 	public void evalStatements(int level, Tokenizer tk) throws Exception {
-		System.out.println("Entry " + level);
-		tk.dumpRemainingTokens("Entry", 5);
+		if (debug) {
+			System.out.println("Entry " + level);
+			tk.dumpRemainingTokens("Entry", 5);
+		}
 		wb.enterScope();
 		evalStatementsInt(level, tk);
 		wb.exitScope();
-		System.out.println("Exit  " + level);
-		tk.dumpRemainingTokens("Exit", 5);
+		if (debug) {
+			System.out.println("Exit  " + level);
+			tk.dumpRemainingTokens("Exit", 5);
+		}
 	}
 	
 	public void evalStatementsInt(int level, Tokenizer tk) throws Exception {
@@ -118,7 +123,6 @@ public class Interpreter {
 					tk.consumeToken();
 					if (cond) {
 						tk.seek(elseBranch.falsePosition, "ELSE(cond=true)");
-						
 					}
 					if (elseBranch.inline) {
 						evalInlineStatements(level + 1, tk);
@@ -127,6 +131,8 @@ public class Interpreter {
 					} else {
 						evalStatements(level + 1, tk);
 					}
+				} else {
+					continue;
 				}
 				// tk.dumpRemainingTokens();
 				if (tk.matchTokens(TokenType.ENDIF)) {
@@ -134,7 +140,8 @@ public class Interpreter {
 				} else if (tk.matchTokens(TokenType.END, TokenType.IF)) {
 					tk.consumeToken(2);
 				} else {
-					throw new Exception("Unexpected Token " + tk.nextToken());
+					// throw new Exception("Unexpected Token " + tk.nextToken());
+					continue;
 				}					
 			} else if (tk.matchTokens(TokenType.IDENTIFIER, TokenType.EQ)) {
 				// Assignments
@@ -185,13 +192,17 @@ public class Interpreter {
 	}
 
 	public void evalInlineStatements(int level, Tokenizer tk) throws Exception {
-		System.out.println("Inline Entry " + level);
-		tk.dumpRemainingTokens("Entry", 5);
+		if (debug) {
+			System.out.println("Inline Entry " + level);
+			tk.dumpRemainingTokens("Entry", 5);
+		}
 		wb.enterScope();
 		evalInlineStatementsInt(level, tk);
 		wb.exitScope();
-		System.out.println("Inline Exit  " + level);
-		tk.dumpRemainingTokens("Exit", 5);
+		if (debug) {
+			System.out.println("Inline Exit  " + level);
+			tk.dumpRemainingTokens("Exit", 5);
+		}
 	}
 
 	public void evalInlineStatementsInt(int level, Tokenizer tk) throws Exception {
@@ -233,11 +244,12 @@ public class Interpreter {
 					}
 					evalInlineStatements(level + 1, tk);
 					tk.consumeToken(); // EOL while inline
-				}
+				} 
 				if (tk.matchTokens(TokenType.EOL)) {
 					tk.consumeToken();
 				} else {
-					throw new Exception("Unexpected Token " + tk.nextToken());
+					// throw new Exception("Unexpected Token " + tk.nextToken());
+					continue;
 				}							
 			} else if (tk.matchTokens(TokenType.IDENTIFIER, TokenType.EQ)) {
 				// Assignments

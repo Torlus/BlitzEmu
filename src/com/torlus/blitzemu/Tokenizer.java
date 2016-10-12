@@ -8,6 +8,7 @@ public class Tokenizer {
 	private Vector<Token> tokens = new Vector<Token>();
 	private int position = 0;
 	private int mark = 0;
+	private boolean debug = false;
 	
 	public Token nextToken(int offset) {
 		int p = position + offset;
@@ -43,7 +44,8 @@ public class Tokenizer {
 	}
 	public void seek(int position, String reason) {
 		this.position = position;
-		System.out.println("Branching to " + nextToken() + " cause:" + reason);
+		if (debug)
+			System.out.println("Branching to " + nextToken() + " cause:" + reason);
 		// try { Thread.sleep(1000); } catch(Exception ex) {}
 	}
 	public Token get(int index) {
