@@ -301,4 +301,25 @@ public class Value {
 		return false;
 	}
 	
+	public int toInteger() {
+		switch(type) {
+		case FLOAT:
+			return (int)this.floatValue;
+		case INTEGER:
+			return this.intValue;
+		default:
+			return 0;
+		}
+	}
+	public float toFloat() {
+		switch(type) {
+		case FLOAT:
+			return this.floatValue;
+		case INTEGER:
+			return this.intValue;
+		default:
+			return 0;
+		}
+	}
+	
 }

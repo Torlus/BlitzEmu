@@ -133,43 +133,12 @@ public class Workbench {
 	}
 	
 	public void setVar(int level, String name, Value value) {
-		/*TreeMap<String, Value> scope = null;
-		int l = level;
-		for(int n = level; n >= 0; n--) {
-			scope = variables.get(n);
-			if (scope.get(name) != null) {
-				l = n;
-				break;
-			}
-			scope = null;
-		}
-		if (scope == null) {
-			scope = variables.get(level);
-		}
-		if (debug) {
-			System.out.println("Write @" + level + " (actual @" + l + ") " + name + "=" + value);
-		}
-		scope.put(name, value);*/
 		if (debug)
 			System.out.println("Write " + name + "=" + value);
 		variables.put(name, value);
 	}
 	
 	public Value getVar(int level, String name) {
-		/*TreeMap<String, Value> scope = null;
-		Value value = null;
-		for(int n = level; n >= 0; n--) {
-			scope = variables.get(n);
-			value = scope.get(name); 
-			if (value != null) {
-				if (debug) {
-					System.out.println("Read  @" + level + " (actual @" + n + ") " + name + "=" + value);
-				}
-				return value;
-			}
-		}
-		return null;
-		*/
 		Value value = variables.get(name);
 		if (debug)
 			System.out.println("Read  " + name + "=" + value);
@@ -194,25 +163,16 @@ public class Workbench {
 			}
 		} else if ("Rnd".equals(name)) {
 			v.type = ValueType.FLOAT;
-			Value p = params.remove(0);
-			if (p.type == ValueType.INTEGER) {
-				v.floatValue = p.intValue;
-			} else {
-				v.floatValue = p.floatValue;
-			}
-			v.floatValue *= random.nextFloat();
+			float base = params.remove(0).toFloat();
+			v.floatValue = base * random.nextFloat();
 		} else if ("Int".equals(name)) {
 			v.type = ValueType.INTEGER;
-			Value p = params.remove(0);
-			if (p.type == ValueType.INTEGER) {
-				v.intValue = p.intValue;
-			} else {
-				v.intValue = Math.round(p.floatValue);
-			}
+			float f = params.remove(0).toFloat();
+			v.intValue = Math.round(f);
 		} else if ("QWrap".equals(name)) {
-			int value = params.remove(0).intValue;
-			int min = params.remove(0).intValue;
-			int max = params.remove(0).intValue;
+			int value = params.remove(0).toInteger();
+			int min = params.remove(0).toInteger();
+			int max = params.remove(0).toInteger();
 			v.type = ValueType.INTEGER;
 			v.intValue = value;
 			if (v.intValue < min) {
@@ -264,10 +224,10 @@ public class Workbench {
 			Audio audio = SoundStore.get().getWAV(source + ".wav");
 			sounds.put(index, audio);
 		} else if ("BitMap".equals(name)) {
-			int index = params.remove(0).intValue;
-			int width = params.remove(0).intValue;
-			int height = params.remove(0).intValue;
-			int bpp = params.remove(0).intValue;
+			int index = params.remove(0).toInteger();
+			int width = params.remove(0).toInteger();
+			int height = params.remove(0).toInteger();
+			int bpp = params.remove(0).toInteger();
 			runOnUIThread( new Runnable() {
 				@Override
 				public void run() { 
@@ -321,29 +281,29 @@ public class Workbench {
 				}
 			});
 		} else if ("Buffer".equals(name)) {
-			int index = params.remove(0).intValue;
-			int size = params.remove(0).intValue;
+			int index = params.remove(0).toInteger();
+			int size = params.remove(0).toInteger();
 			Buffer buf = new Buffer();
 			buf.size = size;
 			buffers.put(index, buf);
 		} else if ("Slice".equals(name)) {
 			Slice slice = new Slice();
-			int index = params.remove(0).intValue;
-			slice.y = params.remove(0).intValue;
-			slice.width = params.remove(0).intValue;			
-			slice.height = params.remove(0).intValue;
-			slice.flags = params.remove(0).intValue;
-			slice.bitplanes = params.remove(0).intValue;
-			slice.sprites = params.remove(0).intValue;
-			slice.colors = params.remove(0).intValue;
-			slice.w1 = params.remove(0).intValue;
-			slice.w2 = params.remove(0).intValue;
+			int index = params.remove(0).toInteger();
+			slice.y = params.remove(0).toInteger();
+			slice.width = params.remove(0).toInteger();			
+			slice.height = params.remove(0).toInteger();
+			slice.flags = params.remove(0).toInteger();
+			slice.bitplanes = params.remove(0).toInteger();
+			slice.sprites = params.remove(0).toInteger();
+			slice.colors = params.remove(0).toInteger();
+			slice.w1 = params.remove(0).toInteger();
+			slice.w2 = params.remove(0).toInteger();
 			slices.put(index, slice);
 		} else if ("Show".equals(name)) {
 			int index = params.remove(0).intValue;
 			// System.out.println("Show " + index);
-			int x = (params.size() > 0 ? params.remove(0).intValue : 0);
-			int y = (params.size() > 0 ? params.remove(0).intValue : 0);
+			int x = (params.size() > 0 ? params.remove(0).toInteger() : 0);
+			int y = (params.size() > 0 ? params.remove(0).toInteger() : 0);
 			runOnUIThread( new Runnable() {
 				@Override
 				public void run() { 
@@ -353,7 +313,7 @@ public class Workbench {
 				}
 			});
 		} else if ("VWait".equals(name)) {
-			int count = (params.size() > 0 ? params.remove(0).intValue : 1);
+			int count = (params.size() > 0 ? params.remove(0).toInteger() : 1);
 			if (count > 0) {
 				synchronized(uiTasks) {
 					vCount = count;
@@ -377,10 +337,10 @@ public class Workbench {
 			int index = params.remove(0).intValue;
 			buffers.get(index).blits.clear();
 		} else if ("BBlit".equals(name)) {
-			int buf = params.remove(0).intValue;
-			int shp = params.remove(0).intValue;
-			int x = params.remove(0).intValue;
-			int y = params.remove(0).intValue;
+			int buf = params.remove(0).toInteger();
+			int shp = params.remove(0).toInteger();
+			int x = params.remove(0).toInteger();
+			int y = params.remove(0).toInteger();
 			BBlit blit = new BBlit();
 			blit.image = shapes.get(shp).image;
 			blit.x = x;
@@ -397,6 +357,7 @@ public class Workbench {
 		} else if ("QAMIGA".equals(name)) {	
 		} else if ("Mouse".equals(name)) {
 		} else if ("Use".equals(name)) {			
+		} else if ("Speak".equals(name)) {
 		} else {
 			throw new Exception("Unknown Command " + name);			
 		}
