@@ -3,6 +3,7 @@ package com.torlus.blitzemu;
 public class Preprocessor {
 
 	private Workbench wb;
+	public static boolean debug = false;
 
 	public Preprocessor(Workbench wb) {
 		this.wb = wb;
@@ -144,6 +145,7 @@ public class Preprocessor {
 				// Assignments
 				String variable = tk.nextToken().value;
 				tk.consumeToken(2);
+				System.out.println("WTF");
 				evalExpression(tk);
 			} else if (tk.matchTokens(TokenType.IDENTIFIER)) {
 				// Commands
@@ -251,23 +253,26 @@ public class Preprocessor {
 	}
 	
 	public void evalExpression(Tokenizer tk) throws Exception {
-		// System.out.println("Enter E " + tk.nextToken());
+		if (debug)
+			System.out.println("Enter E " + tk.nextToken());
 		try {
 			evalTerm(tk);
 			if (tk.nextToken().isNumeric()) {
 				// <E> <Negative number> -> <E> + <Negative number>
-				evalTerm(tk);
+				evalExpression(tk);
 			} else if (tk.nextToken().isTermOperation()) {
 				tk.consumeToken();
 				evalExpression(tk);
 			}
 		} finally {
-			// System.out.println("Exit  E " + tk.nextToken());			
+			if (debug)
+				System.out.println("Exit  E " + tk.nextToken());			
 		}
 	}
 
 	public void evalTerm(Tokenizer tk) throws Exception {
-		// System.out.println("Enter T " + tk.nextToken());
+		if (debug)
+			System.out.println("Enter T " + tk.nextToken());
 		try {
 			evalFactor(tk);
 			if (tk.nextToken().isFactorOperation()) {
@@ -275,12 +280,14 @@ public class Preprocessor {
 				evalExpression(tk);
 			}
 		} finally {
-			// System.out.println("Exit  T " + tk.nextToken());			
+			if (debug)
+				System.out.println("Exit  T " + tk.nextToken());			
 		}
 	}
 	
 	public void evalFactor(Tokenizer tk) throws Exception {
-		// System.out.println("Enter F " + tk.nextToken());
+		if (debug)
+			System.out.println("Enter F " + tk.nextToken());
 		try {
 			if (tk.matchTokens(TokenType.MINUS)) {
 				tk.consumeToken();
@@ -309,7 +316,8 @@ public class Preprocessor {
 				throw new Exception("Unexpected Token " + tk.nextToken());
 			}
 		} finally {
-			// System.out.println("Exit  F " + tk.nextToken());
+			if (debug)
+				System.out.println("Exit  F " + tk.nextToken());
 		}
 	}
 }

@@ -1,28 +1,42 @@
-vy=230
-vx=150
-px=100
-py=100
-exit=0
-While exit=0
-  Print "A) ex=",ex," i=",i, " px=",px
-  ; dest. enemi X
-  If i=0
-    Print "i ZERO"
-    ex=Rnd(103)
-    ex=85+ex
-    ex=Int(ex)
-    i=1
-  Else
-    Print "i UN"
-    If ex>px
-       px=px+1
-    Else
-       If ex=px Then i=0 Else px=px-1
-    EndIf
-  End If
-  ; dest. enemi Y
-  Print "B) ex=",ex," i=",i, " px=",px
-Wend
+;Trace 2
+;a=1-3+2
+;End
+
+Trace 2
+;z=1
+;y=200
+Print 250-(30)+200
+End
+
+Trace 0
+For z=0 To 4
+  Print z
+Next z
+Trace 0
+
+;vy=230
+;vx=150
+;px=100
+;py=100
+;exit=0
+;While exit=0
+;  Print "A) ex=",ex," i=",i, " px=",px
+;  ; dest. enemi X
+;  If i=0
+;    ex=Rnd(103)
+;    ex=85+ex
+;    ex=Int(ex)
+;    i=1
+;  Else
+;    If ex>px
+;       px=px+1
+;    Else
+;       If ex=px Then i=0 Else px=px-1
+;    EndIf
+;  End If
+;  ; dest. enemi Y
+;  Print "B) ex=",ex," i=",i, " px=",px
+;Wend
 
 ;a=3*4.1 + 2
 ;Print a

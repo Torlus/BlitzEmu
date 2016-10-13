@@ -15,7 +15,7 @@ public class Token {
 	public int truePosition = -1;
 	public int falsePosition = -1;
 	public boolean inline = false;
-	public String loopIdentifier = null;
+	public boolean loop = false;
 	
 	public Token(TokenType type, int line) {
 		this(type, line, null);

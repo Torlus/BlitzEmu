@@ -345,11 +345,17 @@ public class Workbench {
 			blit.image = shapes.get(shp).image;
 			blit.x = x;
 			blit.y = y;
-			buffers.get(buf).blits.add(blit);
+			runOnUIThread( new Runnable() {
+				@Override
+				public void run() { 
+					buffers.get(buf).blits.add(blit);
+				}
+			});
 		} else if ("Trace".equals(name)) {
 			int tokens = params.remove(0).intValue;
 			boolean on = tokens != 0;
 			Tokenizer.debug = on;
+			Preprocessor.debug = on;
 			Interpreter.debug = on;
 			Interpreter.debugTokens = tokens;
 			Workbench.debug = on;

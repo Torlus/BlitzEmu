@@ -82,10 +82,12 @@ public class Interpreter {
 				Value from = evalExpression(level, tk);
 				tk.consumeToken();
 				Value to = evalExpression(level, tk);
-				Value loopValue = wb.getVar(level, loopIdentifier);
-				if (loopValue == null) {
+				Value loopValue = null;
+				if (!branch.loop) {
 					loopValue = new Value(from);
+					branch.loop = true;
 				} else {
+					loopValue = wb.getVar(level, loopIdentifier);
 					Token plus = new Token(TokenType.PLUS, 0);
 					Value step = new Value();
 					step.type = ValueType.INTEGER;
@@ -93,9 +95,10 @@ public class Interpreter {
 					loopValue = loopValue.apply(plus, step);
 				}
 				wb.setVar(level, loopIdentifier, loopValue);
-				Token le = new Token(TokenType.EQ, 0);
-				if (!loopValue.compare(le, to)) {
+				Token gt = new Token(TokenType.GT, 0);
+				if (loopValue.compare(gt, to)) {
 					tk.seek(branch.falsePosition, "FOR(false)");
+					branch.loop = false;
 					continue;
 				}
 				evalStatements(level + 1, tk);
@@ -264,26 +267,37 @@ public class Interpreter {
 	}
 	
 	public Value evalExpression(int level,Tokenizer tk) throws Exception {
-		// System.out.println("Enter E " + tk.nextToken());
+		if (debug)
+			System.out.println("Enter E " + tk.nextToken());
 		try {
-			Value value = evalTerm(level, tk);
+			Value leftValue = evalTerm(level, tk);
+			if (debug)
+				System.out.println("E: Left Eval = " + leftValue);
 			if (tk.nextToken().isNumeric()) {
 				// <E> <Negative number> -> <E> + <Negative number>
-				return value.apply(new Token(TokenType.PLUS, 0), evalTerm(level, tk));
+				Value rightValue = evalExpression(level, tk);
+				if (debug)
+					System.out.println("E: Right Eval (Numeric) = " + rightValue);
+				return leftValue.apply(new Token(TokenType.PLUS, 0), rightValue);
 			} else if (tk.nextToken().isTermOperation()) {
 				Token op = tk.nextToken();
 				tk.consumeToken();
-				return value.apply(op, evalExpression(level, tk));
+				Value rightValue = evalExpression(level, tk);
+				if (debug)
+					System.out.println("E: Right Eval (Term Op) = " + rightValue);
+				return leftValue.apply(op, rightValue);
 			} else {
-				return value;
+				return leftValue;
 			}
 		} finally {
-			// System.out.println("Exit  E " + tk.nextToken());			
+			if (debug)
+				System.out.println("Exit  E " + tk.nextToken());			
 		}
 	}
 
 	public Value evalTerm(int level, Tokenizer tk) throws Exception {
-		// System.out.println("Enter T " + tk.nextToken());
+		if (debug)
+			System.out.println("Enter T " + tk.nextToken());
 		try {
 			Value value = evalFactor(level, tk);
 			if (tk.nextToken().isFactorOperation()) {
@@ -294,12 +308,14 @@ public class Interpreter {
 				return value;
 			}
 		} finally {
-			// System.out.println("Exit  T " + tk.nextToken());			
+			if (debug)
+				System.out.println("Exit  T " + tk.nextToken());			
 		}
 	}
 	
 	public Value evalFactor(int level, Tokenizer tk) throws Exception {
-		// System.out.println("Enter F " + tk.nextToken());
+		if (debug)
+			System.out.println("Enter F " + tk.nextToken());
 		try {
 			if (tk.matchTokens(TokenType.MINUS)) {
 				tk.consumeToken();
@@ -341,7 +357,8 @@ public class Interpreter {
 				throw new Exception("Unexpected Token " + tk.nextToken());
 			}
 		} finally {
-			// System.out.println("Exit  F " + tk.nextToken());
+			if (debug)
+				System.out.println("Exit  F " + tk.nextToken());
 		}
 	}
 }
