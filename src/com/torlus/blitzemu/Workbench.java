@@ -5,6 +5,7 @@ import java.util.Random;
 import java.util.TreeMap;
 import java.util.Vector;
 
+import org.newdawn.slick.Color;
 import org.newdawn.slick.Image;
 import org.newdawn.slick.openal.Audio;
 import org.newdawn.slick.openal.SoundStore;
@@ -44,6 +45,7 @@ public class Workbench {
 	
 	public static class Shape {
 		public Image image;
+		public boolean hit[][];
 	}
 	private TreeMap<Integer, Shape> shapes = new TreeMap<>(); 
 
@@ -181,9 +183,32 @@ public class Workbench {
 				v.intValue = v.intValue - max + min;
 			}
 		} else if ("ShapesHit".equals(name)) {
+			int shpA = params.remove(0).toInteger();
+			int xA = params.remove(0).toInteger();
+			int yA = params.remove(0).toInteger();
+			int shpB = params.remove(0).toInteger();
+			int xB = params.remove(0).toInteger();
+			int yB = params.remove(0).toInteger();
 			v.type = ValueType.INTEGER;
 			v.intValue = 0;
-			// TODO
+			Image iA = shapes.get(shpA).image;
+			Image iB = shapes.get(shpB).image;
+			boolean hitA[][] = shapes.get(shpA).hit;
+			boolean hitB[][] = shapes.get(shpB).hit;
+			for(int y = 0; y < iA.getHeight(); y++) {
+				int dy = y + yA - yB;
+				if (dy < 0 || dy >= iB.getHeight())
+					continue;
+				for(int x = 0; x < iA.getWidth(); x++) {
+					int dx = x + xA - xB;
+					if (dx < 0 || dx >= iB.getWidth())
+						continue;
+					if (hitA[y][x] && hitB[dy][dx]) {
+						v.intValue = -1;
+						return v;
+					}
+				}
+			}
 		} else {
 			throw new Exception("Unknown Function " + name);
 		}
@@ -274,6 +299,13 @@ public class Workbench {
 							}
 							Image img = new Image(source + "." + i + ".tga");
 							shp.image = img;
+							shp.hit = new boolean[img.getHeight()][img.getWidth()];
+							for(int y = 0; y < img.getHeight(); y++) {
+								for(int x = 0; x < img.getWidth(); x++) {
+									shp.hit[y][x] = (img.getColor(x, y).getAlpha() != 0);
+								}
+							}
+							
 						}
 					} catch(Exception ex) {
 						ex.printStackTrace();
