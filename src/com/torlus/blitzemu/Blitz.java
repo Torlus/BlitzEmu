@@ -39,8 +39,8 @@ public class Blitz extends BasicGame {
 	
 			FileInputStream in = null;
 			try {
-				// in = new FileInputStream("jps" + File.separator + "src_overtaking_fast.txt");
-				in = new FileInputStream("test_suite.txt");
+				in = new FileInputStream("jps" + File.separator + "src_overtaking.txt");
+				// in = new FileInputStream("test_suite.txt");
 				tk.tokenize(in);
 			} catch (Exception ex) {
 				ex.printStackTrace();

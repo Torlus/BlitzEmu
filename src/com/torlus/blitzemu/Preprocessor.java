@@ -146,7 +146,7 @@ public class Preprocessor {
 				String variable = tk.nextToken().value;
 				tk.consumeToken(2);
 				System.out.println("WTF");
-				evalExpression(tk);
+				evalExpressionInt(tk);
 			} else if (tk.matchTokens(TokenType.IDENTIFIER)) {
 				// Commands
 				String command = tk.nextToken().value;
@@ -251,18 +251,27 @@ public class Preprocessor {
 			}
 		}
 	}
-	
+
 	public void evalExpression(Tokenizer tk) throws Exception {
+		Token expressionStart = tk.nextToken();
+		System.out.println("expressionStart " + tk.nextToken());
+		evalExpressionInt(tk);
+		expressionStart.expressionEnd = tk.position();
+		System.out.println("expressionEnd   " + tk.nextToken());
+				
+	}
+	
+	public void evalExpressionInt(Tokenizer tk) throws Exception {
 		if (debug)
 			System.out.println("Enter E " + tk.nextToken());
 		try {
 			evalTerm(tk);
 			if (tk.nextToken().isNumeric()) {
 				// <E> <Negative number> -> <E> + <Negative number>
-				evalExpression(tk);
+				evalExpressionInt(tk);
 			} else if (tk.nextToken().isTermOperation()) {
 				tk.consumeToken();
-				evalExpression(tk);
+				evalExpressionInt(tk);
 			}
 		} finally {
 			if (debug)
@@ -277,7 +286,7 @@ public class Preprocessor {
 			evalFactor(tk);
 			if (tk.nextToken().isFactorOperation()) {
 				tk.consumeToken();
-				evalExpression(tk);
+				evalExpressionInt(tk);
 			}
 		} finally {
 			if (debug)
@@ -302,7 +311,7 @@ public class Preprocessor {
 				}
 			} else if (tk.matchTokens(TokenType.LPAREN)) {
 				tk.consumeToken();
-				evalExpression(tk);
+				evalExpressionInt(tk);
 				if (tk.matchTokens(TokenType.RPAREN)) {
 					tk.consumeToken();
 				} else {

@@ -17,6 +17,8 @@ public class Token {
 	public boolean inline = false;
 	public boolean loop = false;
 	
+	public int expressionEnd = -1;
+	
 	public Token(TokenType type, int line) {
 		this(type, line, null);
 	}

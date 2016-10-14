@@ -5,7 +5,7 @@
 Trace 2
 ;z=1
 ;y=200
-Print 250-(30)+200
+Print 250-(2*30)+200
 End
 
 Trace 0

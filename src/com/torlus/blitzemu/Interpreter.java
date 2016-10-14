@@ -266,60 +266,71 @@ public class Interpreter {
 		}
 	}
 	
-	public Value evalExpression(int level,Tokenizer tk) throws Exception {
+	private int expressionEnd;
+	
+	public Value evalExpression(int level, Tokenizer tk) throws Exception {
+		expressionEnd = tk.nextToken().expressionEnd;
+		return evalExpressionInt(level, tk, 0);
+	}
+
+	public static String spc(int level) {
+		String res = "";
+		while(level-- > 0)
+			res += "  ";
+		return res;
+	}
+	
+	public Value evalExpressionInt(int level, Tokenizer tk, int etfLevel) throws Exception {
 		if (debug)
-			System.out.println("Enter E " + tk.nextToken());
+			System.out.println(spc(etfLevel) + "Enter E " + tk.nextToken());
 		try {
-			Value leftValue = evalTerm(level, tk);
-			if (debug)
-				System.out.println("E: Left Eval = " + leftValue);
-			if (tk.nextToken().isNumeric()) {
-				// <E> <Negative number> -> <E> + <Negative number>
-				Value rightValue = evalExpression(level, tk);
-				if (debug)
-					System.out.println("E: Right Eval (Numeric) = " + rightValue);
-				return leftValue.apply(new Token(TokenType.PLUS, 0), rightValue);
-			} else if (tk.nextToken().isTermOperation()) {
-				Token op = tk.nextToken();
-				tk.consumeToken();
-				Value rightValue = evalExpression(level, tk);
-				if (debug)
-					System.out.println("E: Right Eval (Term Op) = " + rightValue);
-				return leftValue.apply(op, rightValue);
-			} else {
-				return leftValue;
+			Value leftValue = null;
+			leftValue = evalTerm(level, tk, etfLevel + 1);
+			while(tk.nextToken().isNumeric() || tk.nextToken().isTermOperation()) {
+				if (tk.nextToken().isNumeric()) {
+					// <E> <Negative number> -> <E> + <Negative number>
+					Value rightValue = evalExpressionInt(level, tk, etfLevel + 1);
+					leftValue = leftValue.apply(new Token(TokenType.PLUS, 0), rightValue);
+				} else if (tk.nextToken().isTermOperation()) {
+					Token op = tk.nextToken();
+					tk.consumeToken();
+					Value rightValue = evalTerm(level, tk, etfLevel + 1);
+					leftValue = leftValue.apply(op, rightValue);
+				}
 			}
+			return leftValue;
 		} finally {
 			if (debug)
-				System.out.println("Exit  E " + tk.nextToken());			
+				System.out.println(spc(etfLevel) + "Exit  E " + tk.nextToken());			
 		}
 	}
 
-	public Value evalTerm(int level, Tokenizer tk) throws Exception {
+	public Value evalTerm(int level, Tokenizer tk, int etfLevel) throws Exception {
 		if (debug)
-			System.out.println("Enter T " + tk.nextToken());
+			System.out.println(spc(etfLevel) + "Enter T " + tk.nextToken());
 		try {
-			Value value = evalFactor(level, tk);
-			if (tk.nextToken().isFactorOperation()) {
+			Value leftValue = null;
+			leftValue = evalFactor(level, tk, etfLevel + 1);
+			while (tk.nextToken().isFactorOperation()) {
 				Token op = tk.nextToken();
 				tk.consumeToken();
-				return value.apply(op, evalExpression(level, tk));
-			} else {
-				return value;
+				Value rightValue = evalFactor(level, tk, etfLevel + 1);
+				leftValue = leftValue.apply(op, rightValue);
 			}
+			return leftValue;
 		} finally {
 			if (debug)
-				System.out.println("Exit  T " + tk.nextToken());			
+				System.out.println(spc(etfLevel) + "Exit  T " + tk.nextToken());			
 		}
 	}
 	
-	public Value evalFactor(int level, Tokenizer tk) throws Exception {
+	public Value evalFactor(int level, Tokenizer tk, int etfLevel) throws Exception {
 		if (debug)
-			System.out.println("Enter F " + tk.nextToken());
+			System.out.println(spc(etfLevel) + "Enter F " + tk.nextToken());
 		try {
 			if (tk.matchTokens(TokenType.MINUS)) {
 				tk.consumeToken();
-				return evalFactor(level, tk).negate();
+				return evalFactor(level, tk, etfLevel + 1).negate();
 			} else if (tk.matchTokens(TokenType.IDENTIFIER, TokenType.LPAREN)) {
 				String name = tk.nextToken().value;
 				tk.consumeToken(2);
@@ -329,7 +340,7 @@ public class Interpreter {
 				return value;
 			} else if (tk.matchTokens(TokenType.LPAREN)) {
 				tk.consumeToken();
-				Value value = evalExpression(level, tk);
+				Value value = evalExpressionInt(level, tk, etfLevel + 1);
 				tk.consumeToken();
 				return value;
 			} else if (tk.nextToken().isValue()) {
@@ -358,7 +369,7 @@ public class Interpreter {
 			}
 		} finally {
 			if (debug)
-				System.out.println("Exit  F " + tk.nextToken());
+				System.out.println(spc(etfLevel) + "Exit  F " + tk.nextToken());
 		}
 	}
 }
