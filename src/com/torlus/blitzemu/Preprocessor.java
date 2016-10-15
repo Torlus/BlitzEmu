@@ -23,11 +23,15 @@ public class Preprocessor {
 		
 	
 	public void evalStatements(int level, Tokenizer tk) throws Exception {
-		System.out.println("Entry " + level);
-		tk.dumpRemainingTokens("Entry", 5);
+		if (debug) {
+			System.out.println("Entry " + level);
+			tk.dumpRemainingTokens("Entry", 5);
+		}
 		evalStatementsInt(level, tk);
-		System.out.println("Exit  " + level);
-		tk.dumpRemainingTokens("Exit", 5);
+		if (debug) {
+			System.out.println("Exit  " + level);
+			tk.dumpRemainingTokens("Exit", 5);
+		}
 	}
 	
 	public void evalStatementsInt(int level, Tokenizer tk) throws Exception {
@@ -145,7 +149,6 @@ public class Preprocessor {
 				// Assignments
 				String variable = tk.nextToken().value;
 				tk.consumeToken(2);
-				System.out.println("WTF");
 				evalExpressionInt(tk);
 			} else if (tk.matchTokens(TokenType.IDENTIFIER)) {
 				// Commands
@@ -191,11 +194,15 @@ public class Preprocessor {
 	}
 
 	public void evalInlineStatements(int level, Tokenizer tk) throws Exception {
-		System.out.println("Inline Entry " + level);
-		tk.dumpRemainingTokens("Inline Entry", 5);
+		if (debug) {
+			System.out.println("Inline Entry " + level);
+			tk.dumpRemainingTokens("Inline Entry", 5);
+		}
 		evalInlineStatementsInt(level, tk);
-		System.out.println("Inline Exit  " + level);
+		if (debug) {
+			System.out.println("Inline Exit  " + level);
 		tk.dumpRemainingTokens("Inline Exit", 5);
+		}
 	}
 
 	public void evalInlineStatementsInt(int level, Tokenizer tk) throws Exception {
@@ -254,10 +261,10 @@ public class Preprocessor {
 
 	public void evalExpression(Tokenizer tk) throws Exception {
 		Token expressionStart = tk.nextToken();
-		System.out.println("expressionStart " + tk.nextToken());
+		// System.out.println("expressionStart " + tk.nextToken());
 		evalExpressionInt(tk);
 		expressionStart.expressionEnd = tk.position();
-		System.out.println("expressionEnd   " + tk.nextToken());
+		// System.out.println("expressionEnd   " + tk.nextToken());
 				
 	}
 	

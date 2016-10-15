@@ -46,7 +46,7 @@ public class Blitz extends BasicGame {
 				ex.printStackTrace();
 				return;
 			}
-			tk.dumpTokens();
+			// tk.dumpTokens();
 	
 			Preprocessor pp = new Preprocessor(wb);
 			System.out.println("*** Preprocessor");
@@ -97,7 +97,6 @@ public class Blitz extends BasicGame {
 
 	@Override
 	public void init(GameContainer gc) throws SlickException {
-		SoundStore.get().init();
 		this.gc = gc;
 		synchronized(startStop) {
 			startStop[0] = true;

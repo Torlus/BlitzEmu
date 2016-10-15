@@ -1,17 +1,22 @@
 package com.torlus.blitzemu;
 
 import java.io.File;
+import java.util.Locale;
 import java.util.Random;
 import java.util.TreeMap;
 import java.util.Vector;
 
-import org.newdawn.slick.Color;
+import javax.speech.AudioException;
+import javax.speech.Central;
+import javax.speech.EngineException;
+import javax.speech.EngineStateError;
+import javax.speech.synthesis.Synthesizer;
+import javax.speech.synthesis.SynthesizerModeDesc;
+import javax.speech.synthesis.Voice;
+
 import org.newdawn.slick.Image;
 import org.newdawn.slick.openal.Audio;
 import org.newdawn.slick.openal.SoundStore;
-import org.newdawn.slick.tests.SoundURLTest;
-
-import com.tinyline.svg.ImageLoader;
 
 public class Workbench {
 	public static boolean debug = false;
@@ -90,12 +95,45 @@ public class Workbench {
 	
 	private Vector<Runnable> uiTasks = new Vector<>();
 	
+	SynthesizerModeDesc desc;
+	Synthesizer synthesizer;
+	Voice voice;
+	
+	private void initTTS(String voiceName) {
+		try {
+			System.setProperty("freetts.voices", 
+		        "com.sun.speech.freetts.en.us.cmu_us_kal.KevinVoiceDirectory");
+		      
+		      desc = new SynthesizerModeDesc(Locale.US);
+		      Central.registerEngineCentral
+		        ("com.sun.speech.freetts.jsapi.FreeTTSEngineCentral");
+		      synthesizer = Central.createSynthesizer(desc);
+		      synthesizer.allocate();
+		      synthesizer.resume();
+		      SynthesizerModeDesc smd = 
+		        (SynthesizerModeDesc)synthesizer.getEngineModeDesc();
+		      Voice[] voices = smd.getVoices();
+		      Voice voice = null;
+		      for(int i = 0; i < voices.length; i++) {
+		        if(voices[i].getName().equals(voiceName)) {
+		          voice = voices[i];
+		          break;
+		        }
+		      }
+		      synthesizer.getSynthesizerProperties().setVoice(voice);
+		} catch(Exception ex) {
+			ex.printStackTrace();
+		}
+	}
+	
 	public Workbench(String assetsPath) {
 		if (assetsPath == null)
 			assetsPath = ".";
 		if (!assetsPath.endsWith(File.separator))
 			assetsPath += File.separator;
 		this.assetsPath = assetsPath;
+		SoundStore.get().init();
+		initTTS("kevin16");
 	}
 		
 	public void runOnUIThread(Runnable r) {
@@ -396,6 +434,9 @@ public class Workbench {
 		} else if ("Mouse".equals(name)) {
 		} else if ("Use".equals(name)) {			
 		} else if ("Speak".equals(name)) {
+			String text = params.remove(0).value;
+			synthesizer.speakPlainText(text, null);
+			synthesizer.waitEngineState(Synthesizer.QUEUE_EMPTY);
 		} else {
 			throw new Exception("Unknown Command " + name);			
 		}
