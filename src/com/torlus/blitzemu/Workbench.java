@@ -5,6 +5,8 @@ import java.util.Locale;
 import java.util.Random;
 import java.util.TreeMap;
 import java.util.Vector;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.speech.AudioException;
 import javax.speech.Central;
@@ -98,6 +100,7 @@ public class Workbench {
 	SynthesizerModeDesc desc;
 	Synthesizer synthesizer;
 	Voice voice;
+	ExecutorService ttsES;
 	
 	private void initTTS(String voiceName) {
 		try {
@@ -121,6 +124,7 @@ public class Workbench {
 		        }
 		      }
 		      synthesizer.getSynthesizerProperties().setVoice(voice);
+		      ttsES = Executors.newFixedThreadPool(1);
 		} catch(Exception ex) {
 			ex.printStackTrace();
 		}
@@ -435,8 +439,17 @@ public class Workbench {
 		} else if ("Use".equals(name)) {			
 		} else if ("Speak".equals(name)) {
 			String text = params.remove(0).value;
-			synthesizer.speakPlainText(text, null);
-			synthesizer.waitEngineState(Synthesizer.QUEUE_EMPTY);
+			ttsES.submit(new Runnable() {
+				@Override
+				public void run() {
+					try {
+						synthesizer.speakPlainText(text, null);
+						synthesizer.waitEngineState(Synthesizer.QUEUE_EMPTY);
+					} catch(Exception ex) {
+						ex.printStackTrace();
+					}
+				}				
+			});
 		} else {
 			throw new Exception("Unknown Command " + name);			
 		}
